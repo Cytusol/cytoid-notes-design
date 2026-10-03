@@ -8,7 +8,7 @@
  * Holding is split into independent layers so frame animations can be
  * composed at runtime exactly like the vector version:
  *   press    (once, 0.2 s)   head sinks to 0.86 scale, chevron folds away
- *   loop     (loop, 0.6 s)   two ripples + 4 orbiting arcs (seamless)
+ *   loop     (loop, 0.6 s)   two thin ripples (seamless)
  *   progress (progress 0–1)  white arc fills clockwise around the head
  * Bodies (see ./bodies.ts) are stretched elements, not frame clips.
  */
@@ -84,7 +84,7 @@ function holdPress(long: boolean) {
     const hair = ctx.unit * tokens.stroke.hair
     const k = outCubic(seg(t, 0, tokens.time.holdPress))
     const head = circleHead(1, ctx, { glyph: holdGlyph(1 - k), ticks: false })
-    const outer = ring(R * lerp(1.16, 1.3, k), hair * 1.6, ctx.palette.fill, 1 - k * 0.6)
+    const outer = ring(R * lerp(1.16, 1.3, k), hair * 1.6, ctx.palette.fill, 1 - k)
     const extra = long ? brackets(R, 1 + k * 0.12, ctx, 1) : null
     return group([outer, extra, group([head], { transform: { scale: lerp(1, PRESSED, k) } })])
   }
@@ -96,19 +96,13 @@ function holdLoop(long: boolean) {
     const hair = ctx.unit * tokens.stroke.hair
     const P = tokens.time.holdLoop
     const u = (((t % P) + P) % P) / P
+    // two thin ripples, half a period apart → seamless; nothing else competes with the progress arc
     const ripples: SceneNode[] = []
     for (let i = 0; i < 2; i++) {
       const v = (u + i / 2) % 1
-      ripples.push(ring(R * lerp(PRESSED, long ? 1.9 : 1.65, outCubic(v)), hair * lerp(3, 0.8, v), ctx.palette.light, (1 - v) * 0.85))
+      ripples.push(ring(R * lerp(1.08, long ? 1.85 : 1.6, outCubic(v)), hair * lerp(2.6, 0.6, v), ctx.palette.light, (1 - v) ** 1.5 * 0.9))
     }
-    // 4 arcs orbit by a quarter turn per period → seamless
-    const orbitR = R * 1.3
-    const spin = u * (TAU / 4)
-    const orbit = group(Array.from({ length: 4 }, (_, i) => {
-      const c = spin + i * (TAU / 4)
-      return arc(orbitR, c - 0.32, c + 0.32, hair * 2.2, ctx.palette.fill)
-    }))
-    return group([...ripples, orbit])
+    return group(ripples)
   }
 }
 
@@ -138,7 +132,7 @@ function makeHold(long: boolean): NoteDesign {
     },
     hold: {
       press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86, chevron folds away.' },
-      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'Two ripples + four orbiting arcs. Seamless loop.' },
+      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'Two thin ripples half a period apart. Seamless loop.' },
       progress: { id: 'hold-progress', mode: 'progress', duration: 1, draw: holdProgress(long), note: 'Progress arc, x = hold progress.' },
     },
     clear: makeClearClips({ shape: 'circle', reach: long ? 2.3 : 2.1, sectors: 24, extra: long ? 'beam' : 'double', seed: long ? 4 : 3 }),

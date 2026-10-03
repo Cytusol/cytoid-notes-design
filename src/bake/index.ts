@@ -115,12 +115,14 @@ async function bakeClip(clip: Clip, ctx: DrawContext, dir: string, rel: string, 
   }
 }
 
-async function bakeBodies(ctx: DrawContext, dir: string, rel: string) {
+async function bakeBodies(ctx: DrawContext, dir: string, rel: string, only: (name: string) => boolean) {
   const out: Record<string, { file: string, width: number, height: number, repeat: 'y' | 'none', note: string }> = {}
   await mkdir(join(dir, rel), { recursive: true })
   const Wb = Math.ceil(ctx.unit * tokens.stroke.holdBody) + 2
   const tile = holdDashPeriod(ctx)
   const put = async (name: string, node: SceneNode, w: number, h: number, ox: number, oy: number, repeat: 'y' | 'none', note: string) => {
+    if (!only(name))
+      return
     const file = `${rel}/${name}.png`
     await writeFile(join(dir, file), rasterize(node, w, h, ox, oy))
     out[name] = { file, width: w, height: h, repeat, note }
@@ -174,13 +176,10 @@ export async function bake(options: BakeOptions): Promise<FrameManifest> {
     for (const fam of ['hold', 'long-hold', 'drag', 'click-drag'] as const) {
       const kind: NoteKind = fam === 'drag' ? 'drag-child' : fam === 'click-drag' ? 'click-drag-child' : fam
       const ctx = createContext(kind, { palette, direction, scale })
-      const b = await bakeBodies(ctx, options.outDir, `bodies/${direction}/${fam}`)
-      for (const [k, v] of Object.entries(b)) {
-        // keep only the relevant parts per family
-        const relevant = fam === 'hold' ? k.startsWith('hold') : fam === 'long-hold' ? k.startsWith('long-hold') : k === 'drag-line'
-        if (relevant)
-          manifest.bodies[direction]![`${fam}:${k}`] = v
-      }
+      const relevant = (k: string) => fam === 'hold' ? k.startsWith('hold') : fam === 'long-hold' ? k.startsWith('long-hold') : k === 'drag-line'
+      const b = await bakeBodies(ctx, options.outDir, `bodies/${direction}/${fam}`, relevant)
+      for (const [k, v] of Object.entries(b))
+        manifest.bodies[direction]![`${fam}:${k}`] = v
     }
     log(`bodies/${direction}`)
   }

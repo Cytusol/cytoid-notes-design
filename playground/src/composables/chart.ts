@@ -84,7 +84,8 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
         return
       const a = notePosition(note, width, height)
       const b = notePosition(next, width, height)
-      const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale })
+      // the whole chain takes the child's colour family (click-drag chains stay distinguishable)
+      const dc = createContext(next.kind, { palette, direction: directionFor(note.hit), scale })
       const node = dragLine({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, lead: clamp01((local - (next.hit - 1.1)) / 0.5), trail: clamp01((local - note.hit) / (next.hit - note.hit)) }, dc)
       if (node) {
         ctx.save()

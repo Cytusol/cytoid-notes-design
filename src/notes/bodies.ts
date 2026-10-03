@@ -5,7 +5,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext } from './types'
-import { clamp01, lerp } from '../core/ease'
+import { clamp01, lerp, outCubic, seg } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 
@@ -32,7 +32,9 @@ export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
   const hair = ctx.unit * tokens.stroke.hair
   const L = Math.max(0, o.length)
   const appear = clamp01(o.appear ?? 1)
-  const shown = L * appear
+  // body unrolls from the head once the head is mostly built (hidden under it before)
+  const unroll = outCubic(seg(appear, 0.3, 0.9))
+  const shown = L * unroll
   const done = L * clamp01(o.progress)
   const dash = holdDashPeriod(ctx) / 2
   const items: SceneNode[] = [
@@ -50,10 +52,10 @@ export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
     )
   }
   // end cap: a small white bar across the end
-  if (appear >= 1) {
+  if (unroll >= 1) {
     items.push({ type: 'rect', x: -Wb * 0.85, y: s * L - hair * 1.6, w: Wb * 1.7, h: hair * 3.2, fill: ctx.palette.ring })
   }
-  return group(items)
+  return group(items, { opacity: seg(appear, 0.3, 0.45) })
 }
 
 export interface LongHoldBodyOptions {
@@ -69,7 +71,8 @@ export interface LongHoldBodyOptions {
 export function longHoldBody(o: LongHoldBodyOptions, ctx: DrawContext): SceneNode {
   const Wb = ctx.unit * tokens.stroke.holdBody
   const hair = ctx.unit * tokens.stroke.hair
-  const a = clamp01(o.appear ?? 1)
+  const appear = clamp01(o.appear ?? 1)
+  const a = outCubic(seg(appear, 0.3, 0.9))
   const top = o.top * a
   const bottom = o.bottom * a
   const p = clamp01(o.progress)
@@ -83,7 +86,7 @@ export function longHoldBody(o: LongHoldBodyOptions, ctx: DrawContext): SceneNod
     const w = lerp(Wb * 0.6, Wb, Math.min(1, p * 4))
     items.push({ type: 'rect', x: -w / 2, y: -top * p, w, h: (top + bottom) * p, fill: ctx.palette.fill })
   }
-  return group(items)
+  return group(items, { opacity: seg(appear, 0.3, 0.45) })
 }
 
 export interface DragLineOptions {
