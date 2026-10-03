@@ -116,7 +116,7 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   }
   else if (flavor.extra === 'beam') {
     const k = outCubic(seg(u, 0, 0.6))
-    const h = R * lerp(1, 9, k)
+    const h = R * lerp(1, 4.5, k)
     const w = W * lerp(1.4, 0.2, k)
     extra = { type: 'rect', x: -w / 2, y: -h, w, h: h * 2, fill: color, opacity: 0.85 * (1 - seg(u, 0.25, 0.75)) }
   }
@@ -135,7 +135,8 @@ export function missEffect(shape: EffectShape, u: number, ctx: DrawContext): Sce
     solid(shape, R * lerp(0.92, 0.75, k), ctx.palette.track, ctx, 0.9),
     outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
   ], { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
-  const c = R * 0.38 * outQuart(seg(u, 0.05, 0.4))
+  const half = shape === 'capsule' ? ctx.size * 0.15 : R
+  const c = half * (shape === 'capsule' ? 0.55 : 0.38) * outQuart(seg(u, 0.05, 0.4))
   const cross = group([
     { type: 'line', x1: -c, y1: -c, x2: c, y2: c, stroke: gray, strokeWidth: W * 0.8, cap: 'round' },
     { type: 'line', x1: c, y1: -c, x2: -c, y2: c, stroke: gray, strokeWidth: W * 0.8, cap: 'round' },
