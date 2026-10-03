@@ -38,6 +38,8 @@ export function gradeFor(index: number, mix: GradeMix): Grade {
   const grades: Grade[] = mix === 'mixed' ? ['perfect', 'great', 'perfect', 'good', 'bad', 'perfect'] : ['perfect', 'miss', 'great', 'good', 'miss', 'bad']
   return grades[index % grades.length]!
 }
+/** intro → hit window in seconds (1.1 page at 120 BPM, 2 beats per page) */
+export const APPROACH = 1.1
 export function directionFor(hit: number): Direction {
   return Math.floor(hit) % 2 === 0 ? 'up' : 'down'
 }
@@ -46,11 +48,17 @@ export function notePosition(note: ChartNote, width: number, height: number) {
   const p = note.hit % 1
   return { x: 50 + note.x * (width - 100), y: 35 + (direction === 'up' ? 1 - p : p) * (height - 70) }
 }
+/** Cytoid DragLineElement: leading edge grows from (source intro − 0.133 s) to (destination intro − 0.132 s). */
+function dragLead(src: ChartNote, dst: ChartNote, t: number) {
+  const a = src.hit - APPROACH - 0.133
+  const b = dst.hit - APPROACH - 0.132
+  return b <= a ? (t >= b ? 1 : 0) : clamp01((t - a) / (b - a))
+}
 function stateAt(note: ChartNote, t: number, grade: Grade): NoteState | null {
-  if (t < note.hit - 1.1)
+  if (t < note.hit - APPROACH)
     return null
   if (t < note.hit)
-    return { phase: 'enter', p: clamp01((t - (note.hit - 1.1)) / 1.1) }
+    return { phase: 'enter', p: clamp01((t - (note.hit - APPROACH)) / APPROACH) }
   if (grade === 'miss')
     return t - note.hit <= tokens.time.clear.miss ? { phase: 'miss', t: t - note.hit } : null
   if (note.end && t < note.end)
@@ -86,7 +94,7 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
       const b = notePosition(next, width, height)
       // the whole chain takes the child's colour family (click-drag chains stay distinguishable)
       const dc = createContext(next.kind, { palette, direction: directionFor(note.hit), scale })
-      const node = dragLine({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, lead: clamp01((local - (next.hit - 1.1)) / 0.5), trail: clamp01((local - note.hit) / (next.hit - note.hit)) }, dc)
+      const node = dragLine({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, lead: dragLead(note, next, local), trail: clamp01((local - note.hit) / (next.hit - note.hit)) }, dc)
       if (node) {
         ctx.save()
         drawScene(ctx, node)
@@ -98,7 +106,7 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
       const state = stateAt(note, local, grade)
       if (!state)
         return
-      const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale })
+      const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale, approach: APPROACH })
       const pos = notePosition(note, width, height)
       // Drops approach from the origin side of this page's scanner and meet it at hit time.
       if (note.kind.startsWith('drop-') && state.phase === 'enter')

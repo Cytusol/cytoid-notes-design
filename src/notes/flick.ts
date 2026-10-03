@@ -15,7 +15,17 @@ import { tokens } from '../tokens'
 import { makeClearClips, makeMissClip } from './effects'
 import { diamond } from './parts'
 
-export const FLICK_LOCK = 1 - tokens.time.flickLock / tokens.time.enter
+/**
+ * Normalised time at which the arrows lock. Cytoid: arrows close
+ * `min(0.25 s, approach / 2)` before the hit, so this depends on the real
+ * approach window (vector) — frames are baked at the nominal 1.2 s.
+ */
+export function flickLock(approach: number = tokens.time.enter): number {
+  if (approach <= 0)
+    return 0
+  return 1 - Math.min(tokens.time.flickLock, approach / 2) / approach
+}
+export const FLICK_LOCK = flickLock()
 
 function flickArrow(size: number, width: number, color: string): SceneNode {
   // ">" pointing right
@@ -49,8 +59,9 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const build = outQuart(seg(p, 0, 0.45))
   const scale = lerp(0.6, 1, outCubic(seg(p, 0, 0.55)))
 
-  const m = seg(p, 0, FLICK_LOCK)
-  const kick = outBack(seg(p, FLICK_LOCK, FLICK_LOCK + 0.08), 3) - seg(p, FLICK_LOCK, FLICK_LOCK + 0.08)
+  const lock = flickLock(ctx.approach)
+  const m = seg(p, 0, lock)
+  const kick = outBack(seg(p, lock, lock + 0.08), 3) - seg(p, lock, lock + 0.08)
   const near = R * 0.98 + W * 0.6
   const far = near + ctx.unit * 0.95
   const x = lerp(far, near, m) + kick * ctx.unit * 0.06

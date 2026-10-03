@@ -29,6 +29,10 @@ export interface ContextOptions {
   direction?: Direction
   /** px per design px (1 → click note = 128 px) */
   scale?: number
+  /** hold body direction, defaults to `direction` */
+  bodyDirection?: Direction
+  /** real approach window in seconds, defaults to the nominal enter duration */
+  approach?: number
 }
 
 export function createContext(kind: NoteKind, o: ContextOptions = {}): DrawContext {
@@ -40,6 +44,8 @@ export function createContext(kind: NoteKind, o: ContextOptions = {}): DrawConte
     palette: palette.note(kind, direction),
     grades: palette.grade,
     direction,
+    bodyDirection: o.bodyDirection ?? direction,
+    approach: o.approach ?? tokens.time.enter,
     unit: tokens.unit * scale,
     size: tokens.unit * tokens.size[kind] * scale,
   }

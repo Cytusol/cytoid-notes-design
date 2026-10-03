@@ -27,7 +27,7 @@ export function holdDashPeriod(ctx: DrawContext): number {
 
 /** Hold body in note-local space. Extends toward -y for `up`, +y for `down`. */
 export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
-  const s = ctx.direction === 'up' ? -1 : 1
+  const s = ctx.bodyDirection === 'up' ? -1 : 1
   const Wb = ctx.unit * tokens.stroke.holdBody
   const hair = ctx.unit * tokens.stroke.hair
   const L = Math.max(0, o.length)

@@ -15,7 +15,7 @@ import { clipsOf, createContext, designs, dragLine, holdBody, holdDashPeriod, lo
 import { createPalette, exportPalette } from '../palette'
 import { toSVGMarkup } from '../render/svg'
 import { NOTE_KINDS, tokens } from '../tokens'
-import { CYLHEIM_TARGETS } from './cylheim'
+import { CYLHEIM_PX_PER_UNIT, CYLHEIM_TARGETS, cylheimSamples } from './cylheim'
 import { sampleTimes } from './sample'
 
 export interface BakeOptions {
@@ -195,9 +195,8 @@ async function bakeCylheim(outDir: string, palette: Palette, scale: number, log:
   const dir = join(outDir, 'cylheim')
   await mkdir(dir, { recursive: true })
   for (const t of CYLHEIM_TARGETS) {
-    const ctx = createContext(t.kind, { palette, direction: t.direction ?? 'up', scale })
-    const unique = [...new Set(t.timeline)]
-    const samples = unique.map(f => ({ f, x: t.sample(f, t.timeline) }))
+    const ctx = createContext(t.kind, { palette, direction: t.direction ?? 'up', scale: scale * CYLHEIM_PX_PER_UNIT / (t.displayScale ?? 1) })
+    const samples = cylheimSamples(t)
     const nodes = samples.map(s => t.draw(s.x, ctx))
     const { w, h } = canvasFor(nodes)
     await Promise.all(samples.map((s, i) => writeFile(join(dir, t.pattern.replace('{frame}', pad(s.f))), rasterize(nodes[i]!, w, h, w / 2, h / 2))))
@@ -205,5 +204,5 @@ async function bakeCylheim(outDir: string, palette: Palette, scale: number, log:
   }
 }
 
-export { CYLHEIM_TARGETS } from './cylheim'
+export { CYLHEIM_PX_PER_UNIT, CYLHEIM_TARGETS, cylheimSamples } from './cylheim'
 export * from './sample'

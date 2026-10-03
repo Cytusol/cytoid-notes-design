@@ -7,7 +7,12 @@ export interface DrawContext {
   kind: NoteKind
   palette: NotePalette
   grades: Record<Grade, string>
+  /** scan direction used for colour (Cytoid `UseAlternativeColor`) */
   direction: Direction
+  /** direction the hold body extends toward (may differ: storyboards, reversed pages) */
+  bodyDirection: Direction
+  /** real approach window in seconds (intro → hit). Used where Cytoid timing is absolute (flick lock). */
+  approach: number
   /** note outer diameter in px (unit × kind size × scale) */
   size: number
   /** click note diameter in px (the global unit, scaled) */

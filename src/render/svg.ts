@@ -33,10 +33,11 @@ function strokeAttr(s: StrokeStyle): string {
   return a
 }
 
-function common(node: { opacity?: number, blend?: string }): string {
+function common(node: { blend?: string }, alpha: number): string {
   let a = ''
-  if (node.opacity !== undefined && node.opacity < 1)
-    a += ` opacity="${n(Math.max(0, node.opacity))}"`
+  // fill-/stroke-opacity (not `opacity`) so fill and stroke blend separately, like Canvas2D
+  if (alpha < 1)
+    a += ` fill-opacity="${n(Math.max(0, alpha))}" stroke-opacity="${n(Math.max(0, alpha))}"`
   if (node.blend === 'add')
     a += ` style="mix-blend-mode:plus-lighter"`
   return a
@@ -65,31 +66,38 @@ function clipEl(c: ClipShape, id: string): string {
   return `<clipPath id="${id}">${inner}</clipPath>`
 }
 
-/** Serialise a scene node to SVG markup (no outer <svg>). */
+/**
+ * Serialise a scene node to SVG markup (no outer <svg>).
+ *
+ * Opacity contract (shared with the Canvas renderer and the Unity port):
+ * group opacity is *multiplied down to the leaves* — there is no offscreen
+ * group compositing. This is what per-sprite alpha in a game engine does.
+ */
 export function toSVGMarkup(node: SceneNode): string {
   let clipId = 0
-  const walk = (nd: SceneNode): string => {
-    if ((nd.opacity ?? 1) <= 0.001)
+  const walk = (nd: SceneNode, parent = 1): string => {
+    const alpha = parent * (nd.opacity ?? 1)
+    if (alpha <= 0.001)
       return ''
     switch (nd.type) {
       case 'circle':
-        return `<circle cx="${n(nd.cx ?? 0)}" cy="${n(nd.cy ?? 0)}" r="${n(Math.max(0, nd.r))}" fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd)}/>`
+        return `<circle cx="${n(nd.cx ?? 0)}" cy="${n(nd.cy ?? 0)}" r="${n(Math.max(0, nd.r))}" fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd, alpha)}/>`
       case 'arc':
         if (Math.abs(nd.end - nd.start) < 1e-4)
           return ''
-        return `<path d="${arcPath(nd.cx ?? 0, nd.cy ?? 0, nd.r, nd.start, nd.end)}" fill="none"${strokeAttr(nd)}${common(nd)}/>`
+        return `<path d="${arcPath(nd.cx ?? 0, nd.cy ?? 0, nd.r, nd.start, nd.end)}" fill="none"${strokeAttr(nd)}${common(nd, alpha)}/>`
       case 'rect':
         if (nd.w <= 0 || nd.h <= 0)
           return ''
-        return `<rect x="${n(nd.x)}" y="${n(nd.y)}" width="${n(nd.w)}" height="${n(nd.h)}"${nd.rx ? ` rx="${n(Math.min(nd.rx, nd.w / 2, nd.h / 2))}"` : ''} fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd)}/>`
+        return `<rect x="${n(nd.x)}" y="${n(nd.y)}" width="${n(nd.w)}" height="${n(nd.h)}"${nd.rx ? ` rx="${n(Math.min(nd.rx, nd.w / 2, nd.h / 2))}"` : ''} fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd, alpha)}/>`
       case 'poly': {
         const tag = nd.closed ? 'polygon' : 'polyline'
-        return `<${tag} points="${nd.points.map(([x, y]) => `${n(x)},${n(y)}`).join(' ')}" fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd)}/>`
+        return `<${tag} points="${nd.points.map(([x, y]) => `${n(x)},${n(y)}`).join(' ')}" fill="${nd.fill ?? 'none'}"${strokeAttr(nd)}${common(nd, alpha)}/>`
       }
       case 'line':
-        return `<line x1="${n(nd.x1)}" y1="${n(nd.y1)}" x2="${n(nd.x2)}" y2="${n(nd.y2)}"${strokeAttr(nd)}${common(nd)}/>`
+        return `<line x1="${n(nd.x1)}" y1="${n(nd.y1)}" x2="${n(nd.x2)}" y2="${n(nd.y2)}"${strokeAttr(nd)}${common(nd, alpha)}/>`
       case 'group': {
-        const body = nd.children.map(walk).join('')
+        const body = nd.children.map(c => walk(c, alpha)).join('')
         if (!body)
           return ''
         let defs = ''
@@ -100,7 +108,7 @@ export function toSVGMarkup(node: SceneNode): string {
           clipAttr = ` clip-path="url(#${id})"`
         }
         // transform on outer <g>, clip on inner so the clip is in local space
-        return `<g${transformAttr(nd.transform)}${common(nd)}>${defs}${clipAttr ? `<g${clipAttr}>${body}</g>` : body}</g>`
+        return `<g${transformAttr(nd.transform)}${nd.blend === 'add' ? ' style="mix-blend-mode:plus-lighter"' : ''}>${defs}${clipAttr ? `<g${clipAttr}>${body}</g>` : body}</g>`
       }
     }
   }

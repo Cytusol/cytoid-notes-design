@@ -22,7 +22,7 @@
 - 颜色家族与 Cytoid 的填充色槽位一一对应：`click / hold / flick / long-hold / drag / click-drag / drop-click / drop-drag`。每个家族都分 **up / down** 两个扫描方向，对应 Cytoid 的 `UseAlternativeColor`。
 - 用户只需要选择 **OKLCH 色相**，亮度和彩度由 `fitLightness(h)` 与 `tokens.chroma` 决定。黄绿区间会自动提亮，所以任意色相的视觉权重都与默认配色一致。这比让用户直接选 hex 更安全，UX 也更好。
 - 每个色相会派生出 5 个角色色：`fill` 主填充、`deep` 深一阶（刻痕、分割线）、`light` 浅一阶（涟漪）、`track` 暗轨道（未填充底盘、Hold 身体），以及 `ring` 外环（默认白色）。
-- 兼容 Cytoid 的自定义颜色：家族覆盖值也可以直接写 `#rrggbb`，此时保留该颜色自身的亮度和彩度。
+- 兼容 Cytoid 的自定义颜色：家族覆盖值也可以直接写 `#rrggbb`，此时保留该颜色自身的亮度和彩度，并且 **不受** `hueShift` 影响。
 - 还支持全局 `hueShift`、`saturation`（设为 0 即单色模式）和 `ring` 外环色。判定色沿用 Cytoid 默认值：Perfect `#5BC0EB`、Great `#FDE74C`、Good `#9BC53D`、Bad `#E55934`；Miss 改为中性灰 `#6B6F7A`，以便在深色背景上看清。
 
 默认色相（up / down）：Click、Hold、Flick、Drop click 为 247 / 20（蓝 / 红）；Long hold 为 88 / 70（金 / 琥珀）；Drag、Drop drag 为 160（绿）；Click drag 为 292（紫，用来区分 Click drag child）。
@@ -72,7 +72,7 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.12 �
 
 ### Flick
 - 菱形外环、菱形填充（线性增长）和中心竖向刻痕（deep 色）。刻痕是对 Cytoid 分割菱形的扁平化呼应。
-- **入场**：菱形四边从各自中点向两端生长（0–0.45）。左右两个向外的 V 形箭头 **线性** 收拢，在 `lock = 1 − 0.25 s / 1.2 s` 时锁定（Cytoid 的提前 0.25 s），锁定瞬间有一个小幅外弹。
+- **入场**：菱形四边从各自中点向两端生长（0–0.45）。左右两个向外的 V 形箭头 **线性** 收拢，在 `lock = 1 − min(0.25 s, approach/2) / approach` 时锁定（与 Cytoid 一致），锁定瞬间有一个小幅外弹。矢量版通过 `createContext(..., { approach })` 传入真实入场时长；帧动画按名义时长 1.2 s 烘焙，所以锁定点固定在 p≈0.79。
 - **clear**：4 段扇区弧，加上左右两条水平冲击条和水平方向的碎片。
 
 ### Drop click / Drop drag
@@ -97,6 +97,8 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.12 �
 - `renderNote(kind, state, ctx)` 返回场景树，`holdBody / longHoldBody / dragLine` 负责可拉伸部件。
 - 场景树只包含 6 种图元，Unity 中可以用 Shapes、LineRenderer 或 SpriteShape 一一对应，也可以继续沿用 Cytoid 现有的 ring/fill sprite 加遮罩。
 - 所有动画都是 `seg / lerp / ease` 的组合，没有任何状态，可逐行移植到 C#。参见 `src/core/ease.ts`。
+- **透明度约定**：组的 opacity **逐级乘到叶子图元上**，不做离屏合成；同一图元的填充和描边也各自混合。这正是游戏引擎里每个 sprite 单独设置 alpha 的行为，Canvas 预览、SVG/resvg 烘焙和 Unity 移植三者因此保持一致。
+- `createContext` 的 `direction` 只决定配色（对应 Cytoid 的 `UseAlternativeColor`，消费方按 Cytoid 的规则自行算出，包括 `is_forward` 和 Drop 的 `NoteDirection`）。Hold 身体和箭头的朝向由独立的 `bodyDirection` 决定，默认与 `direction` 相同，以支持故事板覆盖和反向页面。
 
 ### 帧动画（Cytus II / Cylheim 方案）
 - 运行 `pnpm bake`（参数见 `scripts/bake.ts`）后输出到 `<out>/`：
@@ -105,10 +107,14 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.12 �
   - `<kind>/<dir>/<clip>.sheet.png`：图集，行列数写在 manifest 里；
   - `bodies/<dir>/<family>/*.png`：可平铺的身体和连线条带；
   - `cylheim/`（加 `--cylheim` 参数时生成）：沿用 Cylheim `src/images/designer` 的文件名和帧号。烘焙时按 Cylheim 的帧时间线（含重复帧）逐帧反采样，保证动画节奏与矢量版完全一致。
-- **采样规则**：`normalized` 的第 i 帧对应 p = (i+1)/N，播放时取 `i = min(N−1, floor(p·N))`，最后一帧就是判定时刻的姿态，与 Cylheim 的取帧方式相同。
+- **采样规则**：`normalized` 采用右端点采样，第 i 帧画的是 p = (i+1)/N 时的姿态，播放时取 `i = min(N−1, floor(p·N))`。因此每帧显示的是所在时间片终点的姿态，比连续时间最多超前 1/N，最后一帧正好是判定时刻的姿态。Cylheim 的取帧方式与此相同。
 - 帧图锚点都在中心 (0.5, 0.5)。画布按全部帧的包围盒对称裁切。
 - 颜色已烘焙进帧图。需要自定义色相时，用 `--palette palette.json` 重新烘焙，或用 `--hue-shift` 整体旋转色相。
 
 ### Cylheim 适配说明
 - Enter（Click / Hold / Long hold / Drag / DragChild / Flick）和 Bloom（Click / Drag / Flick / Hold / LongHold）可以直接替换使用。
+  - 帧时间线：Enter 为 30 fps（含重复帧）；Bloom 为 51 fps，前 3 或 4 帧各显示一次，其余帧各显示两次。烘焙时按每帧的实际显示时刻反采样。因为 Cylheim 各家族的 Bloom 窗口长度不同（0.33–0.67 s），我们 0.42 s 的特效会被均匀压缩或拉伸进这个窗口。
+  - 尺寸：Cylheim 会再乘一次自己的显示倍率（Hold / LongHold ×0.83，Drag head ×0.8，Drag child ×0.42，Flick ×0.8）。烘焙时按 `174px / 128 ÷ 倍率` 放大来抵消，所以屏幕上看到的大小仍符合本设计。Hold 进入按住状态后，Cylheim 的倍率会变成 ×1，Button 序列也按 ×1 烘焙。
+  - Hold 的 17–40 号帧会被 grouped-popup 预加载，其中奇数帧 25–39 不在普通时间线上，按帧号插值补齐。
+  - Cylheim 中的 Click drag head 用的是 Drag 的贴图；在本设计里它与 Click 相同，替换后需要在 Cylheim 侧改回用 Click 贴图。
 - Hold 的 Button 和 Fire 已按原名输出，但 Cylheim 会循环播放 Button，Fire 则带 83px 锚点偏移和加色混合，需要在 Cylheim 侧写一个小适配器。更推荐的做法是新增一个读取 `manifest.json` 的 provider。

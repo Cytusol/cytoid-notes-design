@@ -24,7 +24,7 @@ import { arc, chevron, dashedRing, ring } from './parts'
 const PRESSED = 0.86
 
 function dirSign(ctx: DrawContext) {
-  return ctx.direction === 'up' ? 1 : -1
+  return ctx.bodyDirection === 'up' ? 1 : -1
 }
 
 function holdGlyph(show: number) {
@@ -37,7 +37,7 @@ function holdGlyph(show: number) {
       chevron(s * 0.62, W, ctx.palette.ring, 1),
     ], {
       opacity: show,
-      transform: { y: -s * 0.04 * dirSign(ctx), rotate: ctx.direction === 'up' ? 0 : Math.PI, scale: lerp(0.4, 1, outBack(show)) },
+      transform: { y: -s * 0.04 * dirSign(ctx), rotate: ctx.bodyDirection === 'up' ? 0 : Math.PI, scale: lerp(0.4, 1, outBack(show)) },
     })
   }
 }
