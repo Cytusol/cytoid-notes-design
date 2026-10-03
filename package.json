@@ -1,0 +1,61 @@
+{
+  "name": "package-name",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "",
+  "license": "MIT",
+  "repository": "Teages/repo",
+  "sideEffects": false,
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.8.1",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "^24.0.0",
+      "onFail": "download"
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "module": "./dist/index.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/index.d.mts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "obuild",
+    "dev": "vitest dev",
+    "lint": "eslint",
+    "fmt": "eslint --fix",
+    "prepack": "pnpm build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.0.0",
+    "@types/node": "^24.12.4",
+    "@vitest/coverage-v8": "^4.1.6",
+    "changelogen": "^0.6.2",
+    "eslint": "^10.3.0",
+    "jiti": "2.7.0",
+    "obuild": "^0.4.35",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

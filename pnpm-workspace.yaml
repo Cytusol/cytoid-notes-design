@@ -1,0 +1,16 @@
+ignoreWorkspaceRootCheck: true
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
+packages:
+  - playground
+
+peerDependencyRules:
+  ignoreMissing:
+    - rollup
+
+autoInstallPeers: false
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
