@@ -1,0 +1,36 @@
+# Reference notes (research digest)
+
+Condensed findings that the design is built on. Source repos are local checkouts.
+
+## Cytoid (current vector renderer) — `/Users/teages/Documents/GitHub/Cytoid`
+
+- Renderers: `Assets/Scripts/Game/Notes/Classic/Classic*NoteRenderer.cs`, `Assets/Scripts/Game/Notes/Drop/*`.
+- Composition: every classic note = `NoteRing` (white outline) + `NoteFill` (coloured disc).
+  Hold adds body `Line`/`CompletedLine`, `ProgressRing`, `Triangle`, hold particles.
+  Long hold adds a second body line that runs to both screen edges.
+  Drag child has fill only (no ring). Flick = diamond ring/fill + left/right arrows.
+  Click-drag head = drag head + chevron `CDragFill`. Drop click = capsule ring/fill + white core; drop drag = shorter capsule, no core.
+- Approach: `t = clamp01((time - intro) / (start - intro))`; `size = target * lerp(initial_scale, 1, t)`; `fillScale = t`; `opacity = clamp(t * 2, 0, max)`.
+  Fill scale reaching 1 is the main *timing cue* — preserved in the new design.
+- Flick arrows start at ±0.3·orthoSize and converge linearly; they finish `min(0.25s, approach/2)` before the hit.
+- Holding: ring/fill ease to 0.85 scale over 0.2 s; progress ring cut-off = progress; line alpha `0.5 + 0.5·progress`.
+- Drag line: stretched sprite between notes, leading edge introduced over the source note’s window, trailing edge retracts from source hit to destination hit.
+- Sizes (relative to click): drag head 0.8, drag child 0.65, hold/long hold 1, flick 1.125, drop click 1, drop drag 0.8.
+- Colours: ring white; fill Click/Hold/Flick `#35A7FF` / alt `#FF5964`, Drag/CDrag `#39E59E`, Long hold `#F2C85A`.
+  Alt colour is chosen by **scan direction** (`ChartModel.UseAlternativeColor`, drop notes use their note direction).
+- Grade colours: Perfect `#5BC0EB`, Great `#FDE74C`, Good `#9BC53D`, Bad `#E55934`, Miss `#333333`.
+  Clear effect = FlatFX ring (24 sectors, 4 for flick), thickness 1.333 → 0.333, lifetime `0.4 / speed`
+  with speed 1 / 0.9 / 0.7 / 0.5 / 0.3 for P / Gr / Go / B / M.
+
+## Cylheim (Cytus II assets, reference only) — `/Users/teages/Documents/GitHub/Cylheim-Electron`
+
+- Assets: individual RGBA PNG frames in `src/images/designer/`, no atlas. Name pattern
+  `Note-<Kind>-<Phase>-Textures-<Name>_<00000>.png` (5-digit, zero padded).
+- Loader: `src/components/chart-viewport/pixi-runtime-note-animation-provider.ts` (frame lists hard-coded, **30 fps**).
+- Sampling: enter animation window **ends at the hit time**; frame = `floor(normalized * frameCount)`;
+  if the note appears later than the clip length, the window is shortened (clip is time-compressed).
+  Anchor (0.5, 0.5).
+- Phases per kind: Enter (click 41f, drag 47f, flick 42f, hold 40f, long hold 43f), Holding button (in, then looped),
+  Hold fire loop (31f), hold back decoration (enter + ping-pong loop), Bloom/clear (click/drag 10f, hold 18f, flick 19f).
+- Hold lines / drag lines: stretched (hold) or repeated (drag) textures between anchors, progress via mask.
+- Style is skeuomorphic (glows, noise, glitch pixels) — **not** reused; only the phase structure and output format are.

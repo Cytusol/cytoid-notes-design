@@ -1,8 +1,76 @@
 import { describe, expect, it } from 'vitest'
-import { test } from '../src'
+import {
+  bounds,
+  clipsOf,
+  createContext,
+  createPalette,
+  designs,
+  frameIndex,
+  hexToOklch,
+  NOTE_KINDS,
+  oklch,
+  renderNote,
+  sampleTimes,
+  toSVG,
+} from '../src'
 
-describe('package-name', () => {
-  it.todo('works', () => {
-    expect(test()).toBe('works!')
+describe('color', () => {
+  it('round-trips hex through oklch', () => {
+    const { l, c, h } = hexToOklch('#35A7FF')
+    expect(oklch(l, c, h).toLowerCase()).toBe('#35a7ff')
+  })
+  it('palette honours hue overrides and raw hex', () => {
+    const p = createPalette({ families: { click: { up: 140, down: '#FF0000' } } })
+    expect(p.family('click', 'up').hue).toBeCloseTo(140, 0)
+    expect(p.family('click', 'down').fill.toLowerCase()).toBe('#ff0000')
+  })
+})
+
+describe('designs', () => {
+  for (const kind of NOTE_KINDS) {
+    it(`${kind}: every clip renders finite geometry`, () => {
+      const ctx = createContext(kind)
+      for (const clip of clipsOf(designs[kind])) {
+        for (const x of sampleTimes(clip, 30)) {
+          const node = clip.draw(x, ctx)
+          const svg = toSVG(node)
+          expect(svg).not.toMatch(/NaN|Infinity/)
+          const b = bounds(node)
+          if (b)
+            expect(b.every(Number.isFinite)).toBe(true)
+        }
+      }
+    })
+  }
+
+  it('enter ends at a stable, fully visible pose', () => {
+    for (const kind of NOTE_KINDS) {
+      const b = bounds(renderNote(kind, { phase: 'enter', p: 1 }))
+      expect(b, kind).not.toBeNull()
+    }
+  })
+
+  it('clear effects fade out completely', () => {
+    for (const kind of NOTE_KINDS) {
+      const d = designs[kind]
+      const ctx = createContext(kind)
+      for (const clip of [...Object.values(d.clear), d.miss])
+        expect(bounds(clip.draw(clip.duration, ctx)), `${kind}/${clip.id}`).toBeNull()
+    }
+  })
+
+  it('hold loop is seamless', () => {
+    const clip = designs.hold.hold!.loop
+    const ctx = createContext('hold')
+    expect(toSVG(clip.draw(0, ctx))).toBe(toSVG(clip.draw(clip.duration, ctx)))
+  })
+})
+
+describe('sampling', () => {
+  it('normalized frames: last frame is the hit pose and index inverts sampling', () => {
+    const clip = designs.click.enter
+    const xs = sampleTimes(clip, 30)
+    expect(xs.at(-1)).toBe(1)
+    xs.forEach((x, i) => expect(frameIndex(clip, xs.length, x - 1e-9, 30)).toBe(i))
   })
 })

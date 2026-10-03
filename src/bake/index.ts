@@ -1,0 +1,210 @@
+import type { Buffer } from 'node:buffer'
+/**
+ * Frame-animation baker (Node only). Rasterises the vector designs with
+ * resvg into PNG sequences + per-clip sprite sheets + a JSON manifest.
+ */
+import type { SceneNode } from '../core/scene'
+import type { Clip, DrawContext } from '../notes/types'
+import type { Palette, PaletteOptions } from '../palette'
+import type { Direction, NoteKind } from '../tokens'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { Resvg } from '@resvg/resvg-js'
+import { bounds, group } from '../core/scene'
+import { clipsOf, createContext, designs, dragLine, holdBody, holdDashPeriod, longHoldBody } from '../notes'
+import { createPalette, exportPalette } from '../palette'
+import { toSVGMarkup } from '../render/svg'
+import { NOTE_KINDS, tokens } from '../tokens'
+import { CYLHEIM_TARGETS } from './cylheim'
+import { sampleTimes } from './sample'
+
+export interface BakeOptions {
+  outDir: string
+  /** frames per second (Cylheim plays 30) */
+  fps?: number
+  /** px per design px. 1 → click note = 128 px */
+  scale?: number
+  kinds?: readonly NoteKind[]
+  directions?: readonly Direction[]
+  palette?: PaletteOptions
+  /** frames for progress clips */
+  progressFrames?: number
+  /** write individual PNG frames (sheets are always written) */
+  frames?: boolean
+  /** also write a Cylheim-named compat folder */
+  cylheim?: boolean
+  onProgress?: (msg: string) => void
+}
+
+export interface ClipManifest {
+  mode: Clip['mode']
+  duration: number
+  frames: number
+  width: number
+  height: number
+  /** pivot in texture space (0..1), always the note centre */
+  anchor: [number, number]
+  /** file pattern, `{i}` = 5-digit zero-padded frame index */
+  files?: string
+  sheet: { file: string, cols: number, rows: number }
+  sampling: string
+}
+
+export interface FrameManifest {
+  format: 'cytoid-notes/frames@1'
+  fps: number
+  scale: number
+  unit: number
+  /** px per design unit — divide texture size by this to get size relative to a click note */
+  pxPerUnit: number
+  palette: ReturnType<typeof exportPalette>
+  notes: Partial<Record<NoteKind, Partial<Record<Direction, Record<string, ClipManifest>>>>>
+  bodies: Partial<Record<Direction, Record<string, { file: string, width: number, height: number, repeat: 'y' | 'none', note: string }>>>
+}
+
+const pad = (i: number) => String(i).padStart(5, '0')
+
+export function rasterize(node: SceneNode, w: number, h: number, ox: number, oy: number): Buffer {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><g transform="translate(${ox} ${oy})">${toSVGMarkup(node)}</g></svg>`
+  return new Resvg(svg, { fitTo: { mode: 'original' }, font: { loadSystemFonts: false } }).render().asPng()
+}
+
+/** Symmetric canvas around the origin that fits every frame. */
+function canvasFor(nodes: SceneNode[], padPx = 3): { w: number, h: number } {
+  let hx = 1
+  let hy = 1
+  for (const n of nodes) {
+    const b = bounds(n)
+    if (!b)
+      continue
+    hx = Math.max(hx, -b[0], b[2])
+    hy = Math.max(hy, -b[1], b[3])
+  }
+  const even = (v: number) => Math.ceil(v + padPx) * 2
+  return { w: even(hx), h: even(hy) }
+}
+
+async function bakeClip(clip: Clip, ctx: DrawContext, dir: string, rel: string, o: Required<Pick<BakeOptions, 'fps' | 'progressFrames' | 'frames'>>): Promise<ClipManifest> {
+  const xs = sampleTimes(clip, o.fps, o.progressFrames)
+  const nodes = xs.map(x => clip.draw(x, ctx))
+  const { w, h } = canvasFor(nodes)
+  await mkdir(join(dir, rel), { recursive: true })
+  if (o.frames) {
+    await Promise.all(nodes.map((n, i) => writeFile(join(dir, rel, `${clip.id}_${pad(i)}.png`), rasterize(n, w, h, w / 2, h / 2))))
+  }
+  // sprite sheet: one SVG with all frames tiled
+  const cols = Math.min(nodes.length, Math.max(1, Math.floor(4096 / w)))
+  const rows = Math.ceil(nodes.length / cols)
+  const sheet = group(nodes.map((n, i) => group([n], { transform: { x: (i % cols) * w, y: Math.floor(i / cols) * h } })))
+  await writeFile(join(dir, `${rel}.sheet.png`), rasterize(sheet, cols * w, rows * h, w / 2, h / 2))
+  return {
+    mode: clip.mode,
+    duration: clip.duration,
+    frames: nodes.length,
+    width: w,
+    height: h,
+    anchor: [0.5, 0.5],
+    files: o.frames ? `${rel}/${clip.id}_{i}.png` : undefined,
+    sheet: { file: `${rel}.sheet.png`, cols, rows },
+    sampling: {
+      normalized: 'i = min(N-1, floor(p*N)), p = normalised approach progress (window ends at hit time)',
+      once: 'i = min(N-1, round(t*fps)), t = seconds since judgement',
+      loop: 'i = floor((t/duration mod 1)*N)',
+      progress: 'i = round(progress*(N-1))',
+    }[clip.mode],
+  }
+}
+
+async function bakeBodies(ctx: DrawContext, dir: string, rel: string) {
+  const out: Record<string, { file: string, width: number, height: number, repeat: 'y' | 'none', note: string }> = {}
+  await mkdir(join(dir, rel), { recursive: true })
+  const Wb = Math.ceil(ctx.unit * tokens.stroke.holdBody) + 2
+  const tile = holdDashPeriod(ctx)
+  const put = async (name: string, node: SceneNode, w: number, h: number, ox: number, oy: number, repeat: 'y' | 'none', note: string) => {
+    const file = `${rel}/${name}.png`
+    await writeFile(join(dir, file), rasterize(node, w, h, ox, oy))
+    out[name] = { file, width: w, height: h, repeat, note }
+  }
+  const hctx = { ...ctx, direction: 'down' as Direction }
+  await put('hold-track', holdBody({ length: tile * 4, progress: 0, appear: 0.999 }, hctx), Wb, tile, Wb / 2, 0, 'y', 'Unheld hold body; tile vertically. Scroll V by t·4·width for the conveyor.')
+  await put('hold-done', holdBody({ length: tile * 4, progress: 1, appear: 0.999 }, hctx), Wb, tile, Wb / 2, 0, 'y', 'Completed hold body; tile vertically, mask by progress.')
+  const capH = Math.ceil(ctx.unit * tokens.stroke.hair * 3.2) + 2
+  const capW = Math.ceil(ctx.unit * tokens.stroke.holdBody * 1.7) + 2
+  await put('hold-cap', { type: 'rect', x: -capW / 2 + 1, y: -capH / 2 + 1, w: capW - 2, h: capH - 2, fill: ctx.palette.ring }, capW, capH, capW / 2, capH / 2, 'none', 'End cap at the hold end, centred on the end point.')
+  const lw = Math.ceil(ctx.unit * tokens.stroke.holdBody) + 4
+  await put('long-hold-rail', longHoldBody({ top: tile * 2, bottom: tile * 2, progress: 0 }, ctx), lw, tile, lw / 2, tile / 2, 'y', 'Long hold rail; tile vertically across the full play area.')
+  await put('long-hold-done', longHoldBody({ top: tile * 2, bottom: tile * 2, progress: 1 }, ctx), lw, tile, lw / 2, tile / 2, 'y', 'Long hold completed fill; grows from the note toward both edges.')
+  const dw = Math.ceil(ctx.unit * tokens.stroke.dragLine) + 2
+  await put('drag-line', dragLine({ x1: 0, y1: -tile, x2: 0, y2: tile * 2 }, ctx)!, dw, tile, dw / 2, 0, 'y', 'Drag connection; tile/stretch along the segment, rotate to its angle.')
+  return out
+}
+
+export async function bake(options: BakeOptions): Promise<FrameManifest> {
+  const fps = options.fps ?? 30
+  const scale = options.scale ?? 1
+  const kinds = options.kinds ?? NOTE_KINDS
+  const directions = options.directions ?? ['up', 'down']
+  const palette: Palette = createPalette(options.palette)
+  const log = options.onProgress ?? (() => {})
+  const o = { fps, progressFrames: options.progressFrames ?? 61, frames: options.frames ?? true }
+  const manifest: FrameManifest = {
+    format: 'cytoid-notes/frames@1',
+    fps,
+    scale,
+    unit: tokens.unit,
+    pxPerUnit: tokens.unit * scale,
+    palette: exportPalette(palette),
+    notes: {},
+    bodies: {},
+  }
+  await mkdir(options.outDir, { recursive: true })
+  for (const kind of kinds) {
+    for (const direction of directions) {
+      const ctx = createContext(kind, { palette, direction, scale })
+      const entry: Record<string, ClipManifest> = {}
+      for (const clip of clipsOf(designs[kind])) {
+        entry[clip.id] = await bakeClip(clip, ctx, options.outDir, `${kind}/${direction}/${clip.id}`, o)
+        log(`${kind}/${direction}/${clip.id} (${entry[clip.id]!.frames}f)`)
+      }
+      ;(manifest.notes[kind] ??= {})[direction] = entry
+    }
+  }
+  for (const direction of directions) {
+    manifest.bodies[direction] = {}
+    for (const fam of ['hold', 'long-hold', 'drag', 'click-drag'] as const) {
+      const kind: NoteKind = fam === 'drag' ? 'drag-child' : fam === 'click-drag' ? 'click-drag-child' : fam
+      const ctx = createContext(kind, { palette, direction, scale })
+      const b = await bakeBodies(ctx, options.outDir, `bodies/${direction}/${fam}`)
+      for (const [k, v] of Object.entries(b)) {
+        // keep only the relevant parts per family
+        const relevant = fam === 'hold' ? k.startsWith('hold') : fam === 'long-hold' ? k.startsWith('long-hold') : k === 'drag-line'
+        if (relevant)
+          manifest.bodies[direction]![`${fam}:${k}`] = v
+      }
+    }
+    log(`bodies/${direction}`)
+  }
+  if (options.cylheim) {
+    await bakeCylheim(options.outDir, palette, scale, log)
+  }
+  await writeFile(join(options.outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+  return manifest
+}
+
+/** Cylheim-named compat export (`src/images/designer` drop-in names). */
+async function bakeCylheim(outDir: string, palette: Palette, scale: number, log: (m: string) => void) {
+  const dir = join(outDir, 'cylheim')
+  await mkdir(dir, { recursive: true })
+  for (const t of CYLHEIM_TARGETS) {
+    const ctx = createContext(t.kind, { palette, direction: t.direction ?? 'up', scale })
+    const unique = [...new Set(t.timeline)]
+    const samples = unique.map(f => ({ f, x: t.sample(f, t.timeline) }))
+    const nodes = samples.map(s => t.draw(s.x, ctx))
+    const { w, h } = canvasFor(nodes)
+    await Promise.all(samples.map((s, i) => writeFile(join(dir, t.pattern.replace('{frame}', pad(s.f))), rasterize(nodes[i]!, w, h, w / 2, h / 2))))
+    log(`cylheim/${t.pattern}`)
+  }
+}
+
+export { CYLHEIM_TARGETS } from './cylheim'
+export * from './sample'
