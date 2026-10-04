@@ -64,13 +64,15 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   const shape = flavor.shape
   const reach = 1 + (flavor.reach - 1) * g.reach
 
-  // 1. core flash: the note itself pops white → grade colour, then collapses
+  // 1. core flash: a faint grade-colour pop that collapses (no white, and peak
+  // opacity only 0.25 — it marks the hit without pulling the eye)
   const flashK = seg(u, 0, 0.32)
-  const flash = solid(shape, R * lerp(1, 1.08, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32))), flashK < 0.25 ? '#FFFFFF' : color, ctx, 1 - seg(u, 0.2, 0.32))
+  const flash = solid(shape, R * lerp(1, 1.08, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32))), color, ctx, 0.25 * (1 - seg(u, 0.2, 0.32)))
 
-  // 2. shock ring, thickness 1.333 → 0.333 (Cytoid FlatFX)
+  // 2. shock ring, thickness 1.333 → 0.333 (Cytoid FlatFX); peak opacity 0.5 —
+  // a full-strength ring pulled the eye away from the notes around it
   const sk = outExpo(seg(u, 0, 0.85))
-  const shock = outline(shape, R * lerp(0.95, reach, sk), W * lerp(1.6, 0.35, sk), color, ctx, 1 - outCubic(seg(u, 0.12, 0.8)))
+  const shock = outline(shape, R * lerp(0.95, reach, sk), W * lerp(1.6, 0.35, sk), color, ctx, 0.5 * (1 - outCubic(seg(u, 0.12, 0.8))))
 
   // 3. double ring (hold family)
   const second = flavor.extra === 'double'
