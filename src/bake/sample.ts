@@ -10,6 +10,7 @@ import type { Clip } from '../notes/types'
  *  loop:       N = round(duration·fps); frame i shows t = i/N·duration
  *              → player: i = floor(t/duration·N) mod N
  *  progress:   N = progressFrames; frame i shows p = i/(N−1)
+ *  static:     N = 1
  *              → player: i = round(p·(N−1))
  */
 export function sampleTimes(clip: Clip, fps: number, progressFrames = 61): number[] {
@@ -28,6 +29,8 @@ export function sampleTimes(clip: Clip, fps: number, progressFrames = 61): numbe
     }
     case 'progress':
       return Array.from({ length: progressFrames }, (_, i) => i / (progressFrames - 1))
+    case 'static':
+      return [1]
   }
 }
 
@@ -44,5 +47,7 @@ export function frameIndex(clip: Pick<Clip, 'mode' | 'duration'>, frames: number
     }
     case 'progress':
       return Math.max(0, Math.min(frames - 1, Math.round(x * (frames - 1))))
+    case 'static':
+      return 0
   }
 }

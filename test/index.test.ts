@@ -59,6 +59,23 @@ describe('designs', () => {
     }
   })
 
+  it('drop notes are static images', () => {
+    for (const kind of ['drop-click', 'drop-drag'] as const) {
+      const clip = designs[kind].enter
+      const ctx = createContext(kind)
+      expect(clip.mode).toBe('static')
+      expect(sampleTimes(clip, 30)).toHaveLength(1)
+      expect(toSVG(clip.draw(0, ctx))).toBe(toSVG(clip.draw(1, ctx)))
+    }
+  })
+
+  it('drag series reach a steady pose early', () => {
+    for (const kind of ['drag-head', 'drag-child', 'click-drag-child'] as const) {
+      const ctx = createContext(kind)
+      expect(toSVG(designs[kind].enter.draw(0.25, ctx)), kind).toBe(toSVG(designs[kind].enter.draw(1, ctx)))
+    }
+  })
+
   it('hold loop is seamless', () => {
     const clip = designs.hold.hold!.loop
     const ctx = createContext('hold')

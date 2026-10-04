@@ -23,11 +23,12 @@ export interface ClearFlavor {
   seed: number
 }
 
+// Kept compact on purpose: dense charts stack many effects, large ones get noisy.
 const GRADE_SCALE: Record<ClearGrade, { reach: number, shards: number, sector: boolean }> = {
-  perfect: { reach: 1, shards: 10, sector: true },
-  great: { reach: 0.92, shards: 7, sector: true },
-  good: { reach: 0.8, shards: 4, sector: false },
-  bad: { reach: 0.66, shards: 0, sector: false },
+  perfect: { reach: 1, shards: 6, sector: true },
+  great: { reach: 0.9, shards: 4, sector: true },
+  good: { reach: 0.75, shards: 3, sector: false },
+  bad: { reach: 0.6, shards: 0, sector: false },
 }
 
 function outline(shape: EffectShape, r: number, width: number, color: string, ctx: DrawContext, opacity = 1): SceneNode {
@@ -62,7 +63,7 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
 
   // 1. core flash: the note itself pops white → grade colour, then collapses
   const flashK = seg(u, 0, 0.32)
-  const flash = solid(shape, R * lerp(1, 1.18, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32))), flashK < 0.25 ? '#FFFFFF' : color, ctx, 1 - seg(u, 0.2, 0.32))
+  const flash = solid(shape, R * lerp(1, 1.08, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32))), flashK < 0.25 ? '#FFFFFF' : color, ctx, 1 - seg(u, 0.2, 0.32))
 
   // 2. shock ring, thickness 1.333 → 0.333 (Cytoid FlatFX)
   const sk = outExpo(seg(u, 0, 0.85))
@@ -78,7 +79,7 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   if (g.sector && shape !== 'capsule') {
     const k = outQuart(seg(u, 0.05, 1))
     const duty = lerp(0.62, 0.12, k)
-    const r = R * lerp(reach * 0.72, reach * 1.18, k)
+    const r = R * lerp(reach * 0.8, reach * 1.02, k)
     sectors = flavor.sectors <= 4
       ? group(Array.from({ length: 4 }, (_, i) => {
           const c = i * (TAU / 4) + TAU / 8 + (shape === 'diamond' ? 0 : 0)
@@ -93,8 +94,8 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
         count: g.shards + (flavor.extra === 'double' || flavor.extra === 'beam' ? 4 : 0),
         seed: flavor.seed * 31 + g.shards,
         r0: R * 0.8,
-        r1: R * reach * 1.45,
-        size: ctx.unit * 0.075,
+        r1: R * reach * 1.12,
+        size: ctx.unit * 0.06,
         color: grade === 'perfect' ? '#FFFFFF' : color,
         u: seg(u, 0.02, 1),
         sectors: flavor.extra === 'streaks' ? [[TAU / 4 - 0.5, TAU / 4 + 0.5], [TAU * 0.75 - 0.5, TAU * 0.75 + 0.5]] : undefined,
@@ -105,8 +106,8 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   let extra: SceneNode | null = null
   if (flavor.extra === 'streaks') {
     const k = outQuart(seg(u, 0, 0.7))
-    const len = R * lerp(0.4, 2.2, k)
-    const off = R * lerp(0.9, 1.6, k)
+    const len = R * lerp(0.3, 1.2, k)
+    const off = R * lerp(0.9, 1.25, k)
     const th = W * lerp(0.8, 0.15, k)
     const op = 1 - seg(u, 0.35, 0.8)
     extra = group([
@@ -116,7 +117,7 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   }
   else if (flavor.extra === 'beam') {
     const k = outCubic(seg(u, 0, 0.6))
-    const h = R * lerp(1, 4.5, k)
+    const h = R * lerp(1, 3, k)
     const w = W * lerp(1.4, 0.2, k)
     extra = { type: 'rect', x: -w / 2, y: -h, w, h: h * 2, fill: color, opacity: 0.85 * (1 - seg(u, 0.25, 0.75)) }
   }

@@ -4,7 +4,7 @@ import { flickLock } from '../src/notes/flick'
 
 describe('cylheim mapping', () => {
   it('enter timelines end on the hit pose', () => {
-    for (const t of CYLHEIM_TARGETS.filter(t => t.pattern.includes('Enter') || t.pattern.includes('DragChild'))) {
+    for (const t of CYLHEIM_TARGETS.filter(t => t.pattern.includes('Enter') || t.pattern.includes('DragChild') || t.pattern.includes('Drop'))) {
       const s = cylheimSamples(t)
       expect(Math.max(...s.map(x => x.x)), t.pattern).toBe(1)
     }

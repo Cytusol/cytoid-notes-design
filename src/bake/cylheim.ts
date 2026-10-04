@@ -74,6 +74,10 @@ export const CYLHEIM_TARGETS: CylheimTarget[] = [
   { pattern: 'Note-DragChild-Textures-DragChild_in_{frame}.png', kind: 'drag-child', timeline: range(1, 47), sample: enterAt, draw: enter('drag-child'), displayScale: 0.42 },
   { pattern: 'Note-Flick-Enter-Textures-Flick_in_{frame}.png', kind: 'flick', timeline: [...twice(0, 6), ...range(7, 41)], sample: enterAt, draw: enter('flick'), displayScale: 0.8 },
 
+  // drop notes are single static images in Cylheim (134 px wide original art → match its width)
+  { pattern: 'Note-DropClick.png', kind: 'drop-click', timeline: [0], sample: () => 1, draw: designs['drop-click'].enter.draw, displayScale: (1.15 * 128 * CYLHEIM_PX_PER_UNIT) / 134 },
+  { pattern: 'Note-DropDrag.png', kind: 'drop-drag', timeline: [0], sample: () => 1, draw: designs['drop-drag'].enter.draw, displayScale: (1.15 * 128 * CYLHEIM_PX_PER_UNIT) / 134 },
+
   { pattern: 'Note-Click-Bloom-Textures-Click_Boom_{frame}.png', kind: 'click', timeline: hitTiming(41, 50, 3), sample: spread(tokens.time.clear.perfect), draw: designs.click.clear.perfect.draw },
   { pattern: 'Note-Drag-Bloom-Textures-Drag_Boom_{frame}.png', kind: 'drag-head', timeline: hitTiming(41, 50, 3), sample: spread(tokens.time.clear.perfect), draw: designs['drag-head'].clear.perfect.draw },
   { pattern: 'Note-Flick-Bloom-Textures-Flick_BoomR_{frame}.png', kind: 'flick', timeline: hitTiming(41, 59, 4), sample: spread(tokens.time.clear.perfect), draw: designs.flick.clear.perfect.draw },

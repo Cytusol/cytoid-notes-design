@@ -111,6 +111,7 @@ async function bakeClip(clip: Clip, ctx: DrawContext, dir: string, rel: string, 
       once: 'i = min(N-1, round(t*fps)), t = seconds since judgement',
       loop: 'i = floor((t/duration mod 1)*N)',
       progress: 'i = round(progress*(N-1))',
+      static: 'single still image',
     }[clip.mode],
   }
 }
@@ -137,7 +138,8 @@ async function bakeBodies(ctx: DrawContext, dir: string, rel: string, only: (nam
   await put('long-hold-rail', longHoldBody({ top: tile * 2, bottom: tile * 2, progress: 0 }, ctx), lw, tile, lw / 2, tile / 2, 'y', 'Long hold rail; tile vertically across the full play area.')
   await put('long-hold-done', longHoldBody({ top: tile * 2, bottom: tile * 2, progress: 1 }, ctx), lw, tile, lw / 2, tile / 2, 'y', 'Long hold completed fill; grows from the note toward both edges.')
   const dw = Math.ceil(ctx.unit * tokens.stroke.dragLine) + 2
-  await put('drag-line', dragLine({ x1: 0, y1: -tile, x2: 0, y2: tile * 2 }, ctx)!, dw, tile, dw / 2, 0, 'y', 'Drag connection; tile/stretch along the segment, rotate to its angle.')
+  const dash = Math.max(1, Math.round(ctx.unit * tokens.stroke.dragDash))
+  await put('drag-line', dragLine({ x1: 0, y1: 0, x2: 0, y2: dash * 8, dash }, ctx)!, dw, dash * 2, dw / 2, 0, 'y', 'Drag connection (white dashes, 50 % duty); tile along the segment from the source note, rotate to its angle.')
   return out
 }
 
@@ -173,8 +175,8 @@ export async function bake(options: BakeOptions): Promise<FrameManifest> {
   }
   for (const direction of directions) {
     manifest.bodies[direction] = {}
-    for (const fam of ['hold', 'long-hold', 'drag', 'click-drag'] as const) {
-      const kind: NoteKind = fam === 'drag' ? 'drag-child' : fam === 'click-drag' ? 'click-drag-child' : fam
+    for (const fam of ['hold', 'long-hold', 'drag'] as const) {
+      const kind: NoteKind = fam === 'drag' ? 'drag-child' : fam
       const ctx = createContext(kind, { palette, direction, scale })
       const relevant = (k: string) => fam === 'hold' ? k.startsWith('hold') : fam === 'long-hold' ? k.startsWith('long-hold') : k === 'drag-line'
       const b = await bakeBodies(ctx, options.outDir, `bodies/${direction}/${fam}`, relevant)

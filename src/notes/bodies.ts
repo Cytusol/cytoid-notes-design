@@ -99,24 +99,35 @@ export interface DragLineOptions {
   /** trailing edge 0–1 (line retracts as the scanner passes) */
   trail?: number
   opacity?: number
+  /** override dash length in px (bakers round it to whole pixels for seamless tiles) */
+  dash?: number
 }
 
-/** Drag connection between two notes, in world space. Drawn under the notes. */
+/**
+ * Drag connection between two notes, in world space. Drawn under the notes.
+ * Unchanged from Cytoid: white, dashed (50 % duty), same width. The dash
+ * pattern is anchored to the source note so it does not crawl while the
+ * trailing edge retracts.
+ */
 export function dragLine(o: DragLineOptions, ctx: DrawContext): SceneNode | null {
   const lead = clamp01(o.lead ?? 1)
   const trail = clamp01(o.trail ?? 0)
   if (lead <= trail)
     return null
   const W = ctx.unit * tokens.stroke.dragLine
+  const dash = o.dash ?? ctx.unit * tokens.stroke.dragDash
+  const len = Math.hypot(o.x2 - o.x1, o.y2 - o.y1)
   return {
     type: 'line',
     x1: lerp(o.x1, o.x2, trail),
     y1: lerp(o.y1, o.y2, trail),
     x2: lerp(o.x1, o.x2, lead),
     y2: lerp(o.y1, o.y2, lead),
-    stroke: ctx.palette.fill,
+    stroke: ctx.palette.ring,
     strokeWidth: W,
     cap: 'butt',
-    opacity: (o.opacity ?? 1) * 0.9,
+    dash: [dash, dash],
+    dashOffset: trail * len,
+    opacity: o.opacity ?? 1,
   }
 }

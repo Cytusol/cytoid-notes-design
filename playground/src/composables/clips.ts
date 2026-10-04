@@ -2,7 +2,7 @@ import type { Clip, Grade, NoteKind, NoteState } from 'cytoid-notes-design'
 import { designs, tokens } from 'cytoid-notes-design'
 
 export function clipMax(clip: Pick<Clip, 'mode' | 'duration'>) {
-  return clip.mode === 'normalized' || clip.mode === 'progress' ? 1 : clip.duration
+  return clip.mode === 'once' || clip.mode === 'loop' ? clip.duration : 1
 }
 export function lifecycle(kind: NoteKind, time: number, grade: Grade): { state: NoteState | null, label: string } {
   const hold = designs[kind].hold ? 1.8 : 0

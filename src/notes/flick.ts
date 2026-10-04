@@ -92,6 +92,6 @@ export const flick: NoteDesign = {
     draw: flickEnter,
     note: 'Diamond outline grows from edge midpoints, fill grows linearly, chevrons converge linearly and lock 0.25 s early.',
   },
-  clear: makeClearClips({ shape: 'diamond', reach: 1.9, sectors: 4, extra: 'streaks', seed: 2 }),
+  clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),
 }

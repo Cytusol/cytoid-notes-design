@@ -67,10 +67,12 @@ export const tokens = {
     hair: 0.022,
     /** hold progress ring */
     progress: 0.07,
-    /** hold body width */
-    holdBody: 0.2,
-    /** drag connection width */
-    dragLine: 0.075,
+    /** hold body width (Cytoid HoldLine: 0.56 × 1.133 world / 2.235 click ≈ 0.284) */
+    holdBody: 0.284,
+    /** drag connection width (Cytoid DragLine: 0.16 world / 2.235 click) */
+    dragLine: 0.0716,
+    /** drag connection dash and gap (Cytoid: 50 % duty, 0.16 world period) */
+    dragDash: 0.0358,
   },
 
   /** Nominal clip durations (seconds). Normalised clips are stretched to fit the real window. */
@@ -112,7 +114,8 @@ export const tokens = {
     'flick': { up: 247, down: 20 },
     'long-hold': { up: 88, down: 70 },
     'drag': { up: 160, down: 160 },
-    'click-drag': { up: 292, down: 292 },
+    // same as click by default — the child differs by shape (dashed halo) from drag child
+    'click-drag': { up: 247, down: 20 },
     'drop-click': { up: 247, down: 20 },
     'drop-drag': { up: 160, down: 160 },
   } satisfies Record<Family, Record<Direction, number>>,

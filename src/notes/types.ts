@@ -26,8 +26,9 @@ export interface DrawContext {
  *  - `once`: x = seconds since the clip started, plays `duration` once.
  *  - `loop`: x = seconds, seamless with period `duration`.
  *  - `progress`: x ∈ [0, 1] driven by gameplay (hold progress), not time.
+ *  - `static`: a single still image (drop notes). x is ignored.
  */
-export type ClipMode = 'normalized' | 'once' | 'loop' | 'progress'
+export type ClipMode = 'normalized' | 'once' | 'loop' | 'progress' | 'static'
 
 export interface Clip {
   id: string
