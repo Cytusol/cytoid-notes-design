@@ -10,7 +10,7 @@ const status = ref('')
 const hasError = ref(false)
 const json = ref('')
 const exported = computed(() => `${JSON.stringify(paletteOptions.value, null, 2)}\n`)
-const classic: PaletteOptions = { families: Object.fromEntries(FAMILIES.map(f => [f, f === 'long-hold' ? { up: '#F2C85A', down: '#F2C85A' } : ['drag', 'click-drag', 'drop-drag'].includes(f) ? { up: '#39E59E', down: '#39E59E' } : { up: '#35A7FF', down: '#FF5964' }])) }
+const classic: PaletteOptions = { families: Object.fromEntries(FAMILIES.map(f => [f, f === 'long-hold' ? { up: '#F2C85A', down: '#F2C85A' } : ['drag', 'drop-drag'].includes(f) ? { up: '#39E59E', down: '#39E59E' } : { up: '#35A7FF', down: '#FF5964' }])) }
 const presets: {
   name: string
   value: PaletteOptions

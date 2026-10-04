@@ -147,19 +147,23 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
     : group([extra, shock, second, sectors, flash, pieces])
 }
 
-export function missEffect(shape: EffectShape, u: number, ctx: DrawContext): SceneNode {
+export function missEffect(shape: EffectShape, u: number, ctx: DrawContext, ghost?: (ctx: DrawContext, R: number, W: number, k: number) => SceneNode[]): SceneNode {
   const R = ctx.size / 2
   const W = ctx.unit * tokens.stroke.ring
   const gray = ctx.grades.miss
   const k = outCubic(u)
   const op = 1 - seg(u, 0.25, 1)
-  // the note "powers down": fill drains to a dim ghost, outline shrinks and sinks
-  const ghost = group([
-    solid(shape, R * lerp(0.92, 0.75, k), ctx.palette.track, ctx, 0.9),
-    outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
-  ], { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
+  // the note "powers down": fill drains to a dim ghost, outline shrinks and sinks.
+  // Notes whose steady pose differs structurally (drag child: no outer ring) pass
+  // their own ghost so the sinking note is still *their* end pose.
+  const parts = ghost
+    ? ghost(ctx, R, W, k)
+    : [
+        solid(shape, R * lerp(0.92, 0.75, k), ctx.palette.track, ctx, 0.9),
+        outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
+      ]
   // no cross: the MISS judgement text carries the meaning
-  return ghost
+  return group(parts, { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
 }
 
 export function makeClearClips(flavor: ClearFlavor): Record<ClearGrade, Clip> {
@@ -172,11 +176,11 @@ export function makeClearClips(flavor: ClearFlavor): Record<ClearGrade, Clip> {
   return { perfect: mk('perfect'), great: mk('great'), good: mk('good'), bad: mk('bad') }
 }
 
-export function makeMissClip(shape: EffectShape): Clip {
+export function makeMissClip(shape: EffectShape, ghost?: (ctx: DrawContext, R: number, W: number, k: number) => SceneNode[]): Clip {
   return {
     id: 'miss',
     mode: 'once',
     duration: tokens.time.clear.miss,
-    draw: (t, ctx) => missEffect(shape, t / tokens.time.clear.miss, ctx),
+    draw: (t, ctx) => missEffect(shape, t / tokens.time.clear.miss, ctx, ghost),
   }
 }

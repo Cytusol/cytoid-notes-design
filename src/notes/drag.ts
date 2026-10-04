@@ -59,16 +59,24 @@ function childDraw(p: number, ctx: DrawContext): SceneNode {
   ], { opacity: seg(p, 0, 0.06), transform: { scale: lerp(0.5, 1, k) } })
 }
 
+/** Miss ghost in the child's own end pose: bead + deep hairline ring, no outer ring. */
+function childMissGhost(ctx: DrawContext, R: number, _W: number, k: number): SceneNode[] {
+  return [
+    disk(R * lerp(0.92, 0.75, k), ctx.palette.track, 0.9),
+    ring(R * 0.62 * lerp(1, 0.78, k), ctx.unit * tokens.stroke.hair * lerp(1, 0.6, k), ctx.palette.deep, 0.7),
+  ]
+}
+
 export const dragChild: NoteDesign = {
   kind: 'drag-child',
   enter: { id: 'enter', mode: 'normalized', duration: tokens.time.enter, draw: childDraw, note: 'Solid bead (Cytoid), faint deep hairline ring, steady by p = 0.2.' },
   clear: makeClearClips({ shape: 'circle', reach: 1.4, sectors: 24, seed: 6 }),
-  miss: makeMissClip('circle'),
+  miss: makeMissClip('circle', childMissGhost),
 }
 
 export const clickDragChild: NoteDesign = {
   kind: 'click-drag-child',
   enter: { id: 'enter', mode: 'normalized', duration: tokens.time.enter, draw: childDraw, note: 'Same as drag child, click colours.' },
   clear: makeClearClips({ shape: 'circle', reach: 1.4, sectors: 24, seed: 7 }),
-  miss: makeMissClip('circle'),
+  miss: makeMissClip('circle', childMissGhost),
 }

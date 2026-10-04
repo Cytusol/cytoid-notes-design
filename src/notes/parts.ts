@@ -48,9 +48,11 @@ export function tick(a: number, r0: number, r1: number, width: number, stroke: s
   return { type: 'line', x1, y1, x2, y2, stroke, strokeWidth: width, cap: 'butt', opacity }
 }
 
-/** Sharp-cornered diamond (square rotated 45°) — `r` = centre-to-vertex. Miter joins so a
+/**
+ * Sharp-cornered diamond (square rotated 45°) — `r` = centre-to-vertex. Miter joins so a
  *  stroked outline matches the square-capped segments that build it (no corner pop at the
- *  end of the flick's edge-by-edge assembly). */
+ *  end of the flick's edge-by-edge assembly).
+ */
 export function diamond(r: number, style: { fill?: string, stroke?: string, strokeWidth?: number, opacity?: number }): SceneNode {
   return { type: 'poly', points: regularPolygon(4, r), closed: true, join: 'miter', ...style }
 }

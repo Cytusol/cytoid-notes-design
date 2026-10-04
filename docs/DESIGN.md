@@ -154,7 +154,7 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.1 淡
 5. **按类型的附加效果**：Hold 有第二道环，Long hold 有竖直光束，Flick 有水平冲击条和向右的滑动箭头。
 
 评级越低，特效时长越长、范围越小：Perfect 0.42 s，Great 0.46 s，Good 0.52 s，Bad 0.56 s。
-**Miss**（0.5 s）：note 熄灭成暗轨道色，外环变灰并向内收缩、略微下沉。不再划 ×，由 MISS 文字表达。
+**Miss**（0.5 s）：note 熄灭成暗轨道色，外环变灰并向内收缩、略微下沉。不再划 ×，由 MISS 文字表达。残影结构跟随各 note 自己的稳态尾帧：drag child / click drag child 没有外环，收缩时保留内侧的 deep 发丝环（其余圆形 note 维持“盘 + 灰环”结构）。
 
 ### 判定文字（PERFECT / GREAT / GOOD / BAD / MISS）
 - **位置**：文字居中在特效中央（note 中心），与 clear 或 miss 特效同时播放，时长相同。
