@@ -11,6 +11,8 @@ export interface DrawContext {
   direction: Direction
   /** direction the hold body extends toward (may differ: storyboards, reversed pages) */
   bodyDirection: Direction
+  /** chain heading for drag-head arrows, radians (0 = up, clockwise). Frames are baked at 0 — rotate the sprite. */
+  heading: number
   /** real approach window in seconds (intro → hit). Used where Cytoid timing is absolute (flick lock). */
   approach: number
   /** note outer diameter in px (unit × kind size × scale) */

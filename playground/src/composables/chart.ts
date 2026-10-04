@@ -106,8 +106,12 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
       const state = stateAt(note, local, grade)
       if (!state)
         return
-      const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale, approach: APPROACH })
       const pos = notePosition(note, width, height)
+      // drag-head arrows point at the next node of their chain
+      const next = chart[i + 1]
+      const target = note.chain && next?.chain === note.chain ? notePosition(next, width, height) : null
+      const heading = target ? Math.atan2(target.x - pos.x, -(target.y - pos.y)) : 0
+      const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale, approach: APPROACH, heading })
       // Drops approach from the origin side of this page's scanner and meet it at hit time.
       if (note.kind.startsWith('drop-') && state.phase === 'enter')
         pos.y += (dc.direction === 'up' ? 1 : -1) * (note.hit - local) * (height - 70) * 0.65

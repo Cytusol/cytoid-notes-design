@@ -65,6 +65,8 @@ export const tokens = {
     ring: 0.085,
     /** secondary / decorative hairlines */
     hair: 0.022,
+    /** ~1 px fine line at 1x (hold inner ring) */
+    fine: 0.007,
     /** hold progress ring */
     progress: 0.07,
     /** hold body width (Cytoid HoldLine: 0.56 × 1.133 world / 2.235 click ≈ 0.284) */
@@ -114,7 +116,7 @@ export const tokens = {
     'flick': { up: 247, down: 20 },
     'long-hold': { up: 88, down: 70 },
     'drag': { up: 160, down: 160 },
-    // same as click by default — the child differs by shape (dashed halo) from drag child
+    // same as click by default — click drag child differs from drag child by colour only
     'click-drag': { up: 247, down: 20 },
     'drop-click': { up: 247, down: 20 },
     'drop-drag': { up: 160, down: 160 },

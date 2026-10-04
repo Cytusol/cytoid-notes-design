@@ -18,7 +18,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 ## Conventions
 - Clips are pure functions `draw(x, ctx) => SceneNode`; no state, deterministic (use `rng(seed)` for randomness).
 - Angles: 0 = 12 o'clock, clockwise. +y down. Origin = note centre. Unit = 128 design px.
-- Enter clips are `normalized` and must end at the exact hit pose at p = 1. Only Click/Flick carry a timing gauge (linear); Hold and the Drag series reach a steady pose early (hold p≈0.35, drag p=0.2); Drop notes are `static` (one still image).
+- Enter clips are `normalized` and must end at the exact hit pose at p = 1. Only Click/Flick carry timing feedback (Cytus II-style: ease-in core, linear approach ring/arrows, blink at 0.92–1); Hold and the Drag series reach a steady pose early (hold p≈0.35, drag p=0.2); Drop notes are `static` (one still image).
 - Keep Cytoid's original drag line (white dashed, 0.0716u) and hold body width (0.284u). Keep clear effects compact (≤ ~1.5× note radius) and peripheral hints faint.
 - Click-drag family defaults to the click hues.
 - Effects must fully fade by `duration` (tested). Loops must be seamless (tested).

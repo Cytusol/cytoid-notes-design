@@ -5,7 +5,7 @@ import type { Clip, DrawContext, NoteDesign, NoteState } from './types'
 import { group } from '../core/scene'
 import { defaultPalette } from '../palette'
 import { tokens } from '../tokens'
-import { click } from './click'
+import { click, clickDragHead } from './click'
 import { clickDragChild, dragChild, dragHead } from './drag'
 import { dropClick, dropDrag } from './drop'
 import { flick } from './flick'
@@ -18,7 +18,7 @@ export const designs: Record<NoteKind, NoteDesign> = {
   'drag-head': dragHead,
   'drag-child': dragChild,
   'flick': flick,
-  'click-drag-head': { ...click, kind: 'click-drag-head' },
+  'click-drag-head': clickDragHead,
   'click-drag-child': clickDragChild,
   'drop-click': dropClick,
   'drop-drag': dropDrag,
@@ -33,6 +33,8 @@ export interface ContextOptions {
   bodyDirection?: Direction
   /** real approach window in seconds, defaults to the nominal enter duration */
   approach?: number
+  /** drag-head arrow heading in radians (0 = up, clockwise); point it at the next chain node */
+  heading?: number
 }
 
 export function createContext(kind: NoteKind, o: ContextOptions = {}): DrawContext {
@@ -46,6 +48,7 @@ export function createContext(kind: NoteKind, o: ContextOptions = {}): DrawConte
     direction,
     bodyDirection: o.bodyDirection ?? direction,
     approach: o.approach ?? tokens.time.enter,
+    heading: o.heading ?? 0,
     unit: tokens.unit * scale,
     size: tokens.unit * tokens.size[kind] * scale,
   }
@@ -76,9 +79,10 @@ export function renderNote(kind: NoteKind, state: NoteState, ctx: DrawContext = 
     case 'holding': {
       if (!d.hold)
         return d.enter.draw(1, ctx)
+      // layer order: head (press) → loop (inside the head) → progress ring
       return group([
-        d.hold.loop.draw(state.t, ctx),
         d.hold.press.draw(state.t, ctx),
+        d.hold.loop.draw(state.t, ctx),
         d.hold.progress.draw(state.progress, ctx),
       ])
     }
