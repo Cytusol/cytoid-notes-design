@@ -1,5 +1,5 @@
 /**
- * CLICK — circle, white ring, fill core.
+ * CLICK — circle, white ring, solid deep base + fill core (reads as a ball, not a ring).
  *
  * Timing feedback follows the structure of Cytus II's click (studied frame by
  * frame): a calm pre-roll, then an *accelerating* finish with converging
@@ -56,7 +56,8 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     : null
 
   const body = group([
-    disk(inner + 0.5, ctx.palette.track, 0.6),
+    // solid deep base: the note reads as a filled ball from the first frame, not a hollow ring
+    disk(inner + 0.5, ctx.palette.deep),
     disk(coreR, ctx.palette.fill),
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.75 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,

@@ -24,6 +24,9 @@ export interface ClearFlavor {
 }
 
 // Kept compact on purpose: dense charts stack many effects, large ones get noisy.
+/** Flick swipe arrows per grade. */
+const FLICK_ARROWS: Record<ClearGrade, number> = { perfect: 3, great: 2, good: 1, bad: 1 }
+
 const GRADE_SCALE: Record<ClearGrade, { reach: number, shards: number, sector: boolean }> = {
   perfect: { reach: 1, shards: 6, sector: true },
   great: { reach: 0.9, shards: 4, sector: true },
@@ -110,10 +113,29 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
     const off = R * lerp(0.9, 1.25, k)
     const th = W * lerp(0.8, 0.15, k)
     const op = 1 - seg(u, 0.35, 0.8)
-    extra = group([
+    const streaks = group([
       { type: 'rect', x: off, y: -th / 2, w: len, h: th, fill: color },
       { type: 'rect', x: -off - len, y: -th / 2, w: len, h: th, fill: color },
     ], { opacity: op })
+    // swipe direction: 1–3 chevrons fly to the right (rotate the whole effect for other directions)
+    const n = FLICK_ARROWS[grade]
+    const arrows: SceneNode[] = []
+    for (let i = 0; i < n; i++) {
+      const ka = seg(u, i * 0.07, 0.62 + i * 0.07)
+      if (ka <= 0 || ka >= 1)
+        continue
+      const x = R * lerp(0.45, 1.85 - i * 0.38, outQuart(ka))
+      const sz = R * 0.5 * lerp(1, 0.8, ka) * (1 - i * 0.12)
+      arrows.push({
+        type: 'poly',
+        points: [[x - sz * 0.32, -sz * 0.6], [x + sz * 0.32, 0], [x - sz * 0.32, sz * 0.6]],
+        stroke: i === 0 && grade === 'perfect' ? '#FFFFFF' : color,
+        strokeWidth: W * lerp(0.75, 0.4, ka),
+        join: 'miter',
+        opacity: seg(ka, 0, 0.12) * (1 - seg(ka, 0.55, 1)),
+      })
+    }
+    extra = group([streaks, ...arrows])
   }
   else if (flavor.extra === 'beam') {
     const k = outCubic(seg(u, 0, 0.6))
@@ -122,7 +144,10 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
     extra = { type: 'rect', x: -w / 2, y: -h, w, h: h * 2, fill: color, opacity: 0.85 * (1 - seg(u, 0.25, 0.75)) }
   }
 
-  return group([extra, shock, second, sectors, flash, pieces])
+  // flick arrows sit on top (they carry the swipe direction); the long-hold beam sits underneath
+  return flavor.extra === 'streaks'
+    ? group([shock, second, sectors, flash, pieces, extra])
+    : group([extra, shock, second, sectors, flash, pieces])
 }
 
 export function missEffect(shape: EffectShape, u: number, ctx: DrawContext): SceneNode {

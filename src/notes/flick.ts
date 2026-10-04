@@ -77,7 +77,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const g = lerp(0.16, 1, inCubic(seg(p, 0.08, CLICK_TIMING.coreFull))) * seg(p, 0.02, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
   const body = group([
-    diamond(inner + W * 0.15, { fill: ctx.palette.track, opacity: 0.55 }),
+    diamond(inner + W * 0.15, { fill: ctx.palette.deep }),
     diamond(inner * g, { fill: ctx.palette.fill }),
     blink > 0 ? diamond(inner * g, { fill: ctx.palette.ring, opacity: 0.75 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill

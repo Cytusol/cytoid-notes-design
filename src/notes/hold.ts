@@ -4,19 +4,20 @@
  * Holds may be pressed early, so the head carries **no timing gauge**: it
  * reaches a steady pose quickly and reads as a different *shape* from a
  * click — Cytoid's double ring (thick outer ring + hairline inner ring) and a
- * centre glyph: a circle (hold) or a square (long hold, + corner brackets).
+ * dark core with a static centre glyph: a circle (hold) or a square (long
+ * hold, + corner brackets).
  * No arrows: arrows would suggest dragging.
  *
  * Holding is split into independent layers (frame-friendly), composed as
  * press → loop → progress (bottom to top):
- *   press    (once, 0.2 s)   head sinks to 0.86 scale, glyph folds away
- *   loop     (loop, 0.6 s)   the glyph keeps contracting inward (seamless)
+ *   press    (once, 0.2 s)   head sinks to 0.86 scale (glyph stays)
+ *   loop     (loop, 1 s)     glyph ping inside + two outer ripples (seamless)
  *   progress (progress 0–1)  Cytoid-style progress ring: white lead (4/3·p) + fill (p)
  * Bodies (see ./bodies.ts) are stretched elements, not frame clips.
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { inOutCubic, inQuad, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { inOutCubic, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 import { ringWidth } from './click'
@@ -48,6 +49,8 @@ function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number): Sc
   const gw = ctx.unit * tokens.stroke.hair * 1.6
   return group([
     disk(inner + 0.5, ctx.palette.fill, k),
+    // dark core inside the inner ring (two-tone, as in the first prototype)
+    disk(innerRingR * outCubic(k), ctx.palette.deep),
     assemblingRing(innerRingR, innerRingW, ctx.palette.ring, 4, outQuart(seg(k, 0.25, 1)), lerp(TAU / 8, 0, k)),
     glyph > 0 ? group([glyphShape(long, R * GLYPH, gw, ctx.palette.ring)], { opacity: seg(glyph, 0, 0.5), transform: { scale: lerp(0.4, 1, outBack(glyph, 2)) } }) : null,
     assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ctx.palette.ring, 2, outQuart(k), lerp(-TAU / 4, 0, k)),
@@ -93,25 +96,35 @@ function holdPress(long: boolean) {
     const R = ctx.size / 2
     const k = outCubic(seg(t, 0, tokens.time.holdPress))
     const extra = long ? brackets(R, 1 + k * 0.1, ctx, 1) : null
-    return group([extra, group([holdHead(ctx, long, 1, 1 - k)], { transform: { scale: lerp(1, PRESSED, k) } })])
+    return group([extra, group([holdHead(ctx, long, 1, 1)], { transform: { scale: lerp(1, PRESSED, k) } })])
   }
 }
 
-/** While held: the centre glyph keeps contracting toward the centre (2 copies, half a period apart). */
+/**
+ * While held:
+ *  - inside: the (static) centre glyph emits a Tailwind-style *ping* — a copy
+ *    scales 1 → 2 and fades out over the first 75 % of the period,
+ *    ease cubic-bezier(0, 0, 0.2, 1) ≈ outCubic;
+ *  - outside: two thin ripples, half a period apart, beyond the progress ring.
+ * Both are seamless over `holdLoop`.
+ */
 function holdLoop(long: boolean) {
   return (t: number, ctx: DrawContext): SceneNode => {
     const R = ctx.size / 2
+    const hair = ctx.unit * tokens.stroke.hair
     const P = tokens.time.holdLoop
     const u = (((t % P) + P) % P) / P
     const gw = ctx.unit * tokens.stroke.hair * 1.6
-    const from = R * PRESSED * (long ? INNER_RING * 0.8 : INNER_RING) - gw
-    const shapes: SceneNode[] = []
+    const k = outCubic(seg(u, 0, 0.75))
+    const ping = u < 0.75
+      ? glyphShape(long, R * PRESSED * GLYPH * lerp(1, 2, k), gw * lerp(1, 0.5, k), ctx.palette.ring, 1 - k)
+      : null
+    const ripples: SceneNode[] = []
     for (let i = 0; i < 2; i++) {
       const v = (u + i / 2) % 1
-      const r = lerp(from, from * 0.12, inQuad(v))
-      shapes.push(glyphShape(long, r, gw * lerp(1, 0.6, v), ctx.palette.ring, seg(v, 0, 0.15) * (1 - seg(v, 0.75, 1))))
+      ripples.push(ring(R * lerp(PROGRESS_R + 0.12, long ? 2.05 : 1.85, outCubic(v)), hair * lerp(2.4, 0.6, v), ctx.palette.light, (1 - v) ** 1.5 * 0.85))
     }
-    return group(shapes)
+    return group([...ripples, ping].filter(Boolean) as SceneNode[])
   }
 }
 
@@ -139,12 +152,12 @@ function makeHold(long: boolean): NoteDesign {
       duration: tokens.time.enter,
       draw: holdEnter(long),
       note: long
-        ? 'Steady fast (no timing to read). Double ring (hairline inner) + square glyph + corner brackets.'
-        : 'Steady fast (no timing to read). Double ring (hairline inner) + circle glyph.',
+        ? 'Steady fast (no timing to read). Double ring (hairline inner) + dark core + square glyph + corner brackets.'
+        : 'Steady fast (no timing to read). Double ring (hairline inner) + dark core + circle glyph.',
     },
     hold: {
-      press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86, centre glyph folds away.' },
-      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'Centre glyph keeps contracting inward (2 copies, half a period apart). Drawn above the head. Seamless.' },
+      press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86; the centre glyph stays.' },
+      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'Centre glyph pings (Tailwind-style scale 1→2 + fade) and two outer ripples pulse. Drawn above the head. Seamless.' },
       progress: { id: 'hold-progress', mode: 'progress', duration: 1, draw: holdProgress(long), note: 'Cytoid-style progress ring: white lead at 4/3·p, fill at p.' },
     },
     clear: makeClearClips({ shape: 'circle', reach: long ? 1.6 : 1.5, sectors: 24, extra: long ? 'beam' : 'double', seed: long ? 4 : 3 }),
