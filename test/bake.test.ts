@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { CYLHEIM_TARGETS, cylheimSamples } from '../src/bake/cylheim'
-import { flickLock } from '../src/notes/flick'
 
 describe('cylheim mapping', () => {
   it('enter timelines end on the hit pose', () => {
@@ -20,12 +19,5 @@ describe('cylheim mapping', () => {
       const xs = cylheimSamples(t).map(s => s.x)
       xs.slice(1).forEach((x, i) => expect(x, t.pattern).toBeGreaterThanOrEqual(xs[i]!))
     }
-  })
-})
-
-describe('flick lock', () => {
-  it('matches Cytoid earlyClose = min(0.25s, approach/2)', () => {
-    expect(1 - flickLock(1.2)).toBeCloseTo(0.25 / 1.2)
-    expect(1 - flickLock(0.4)).toBeCloseTo(0.5)
   })
 })

@@ -3,30 +3,21 @@
  *
  * Enter:
  *  0.00–0.45  diamond outline draws itself (4 edges grow from the vertices), scale 0.6 → 1
- *  0.00–0.94  fill diamond grows ease-in, 0.92–1 blink (same timing language as Click)
- *  0.00–lock  chevrons slide in linearly from far left/right (Cytoid behaviour),
- *             lock = 1 − 0.25 s / enter duration; then they "snap" (small kick)
+ *  0.00–0.94  fill diamond grows ease-out (settles early, as Click), 0.92–1 blink
+ *  0.00–0.45  chevrons slide in ease-out and settle; no lock/kick — the note carries
+ *             no timing cues, the scan line does
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { bump, inCubic, lerp, outBack, outCubic, outQuart, seg } from '../core/ease'
+import { bump, lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { tokens } from '../tokens'
 import { CLICK_TIMING, CORE_MAX, depthColors } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { diamond, flickChevron } from './parts'
 
-/**
- * Normalised time at which the arrows lock. Cytoid: arrows close
- * `min(0.25 s, approach / 2)` before the hit, so this depends on the real
- * approach window (vector) — frames are baked at the nominal 1.2 s.
- */
-export function flickLock(approach: number = tokens.time.enter): number {
-  if (approach <= 0)
-    return 0
-  return 1 - Math.min(tokens.time.flickLock, approach / 2) / approach
-}
-export const FLICK_LOCK = flickLock()
+/** Normalised p at which the side arrows reach their steady position. */
+const ARROW_SETTLE = 0.45
 
 function flickArrow(size: number, width: number, color: string): SceneNode {
   // ">" pointing right, 90° like the diamond corner
@@ -60,21 +51,20 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const build = outQuart(seg(p, 0, 0.45))
   const scale = lerp(0.6, 1, outCubic(seg(p, 0, 0.55)))
 
-  const lock = flickLock(ctx.approach)
-  const m = seg(p, 0, lock)
-  const kick = outBack(seg(p, lock, lock + 0.08), 3) - seg(p, lock, lock + 0.08)
   const near = R * 0.98 + W * 0.6
   const far = near + ctx.unit * 0.95
-  const x = lerp(far, near, m) + kick * ctx.unit * 0.06
+  // arrows slide in ease-out and settle early — no lock/kick: the note carries
+  // no timing cues, players read the scan line
+  const x = lerp(far, near, outCubic(seg(p, 0, ARROW_SETTLE)))
   const arrowSize = R * 0.62
-  const arrowOpacity = seg(p, 0.05, 0.25)
+  const arrowOpacity = outCubic(seg(p, 0, 0.3))
   const arrows = group([
     group([flickArrow(arrowSize, W * 0.85, ctx.palette.ring)], { transform: { x } }),
     group([flickArrow(arrowSize, W * 0.85, ctx.palette.ring)], { transform: { x: -x, rotate: Math.PI } }),
   ], { opacity: arrowOpacity })
 
-  // same timing language as Click: ease-in core + blink right before the hit
-  const g = lerp(0.16, 1, inCubic(seg(p, 0.08, CLICK_TIMING.coreFull))) * seg(p, 0.02, 0.12)
+  // same timing language as Click: ease-out core from p = 0, settled before the hit
+  const g = lerp(0.16, 1, outCubic(seg(p, 0, CLICK_TIMING.coreFull))) * seg(p, 0, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
   const depth = depthColors(p, ctx)
   const body = group([
@@ -82,7 +72,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     diamond(inner * CORE_MAX * g, { fill: depth.core }),
     blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
-    { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette.deep, strokeWidth: W * 0.5, opacity: seg(p, 0.5, 0.8) },
+    { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette.deep, strokeWidth: W * 0.5, opacity: outCubic(seg(p, 0.05, 0.45)) },
     buildingDiamond(rv, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, build),
   ].filter(Boolean) as SceneNode[], { transform: { scale } })
 
@@ -96,7 +86,7 @@ export const flick: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: flickEnter,
-    note: 'Diamond outline grows from edge midpoints, core grows ease-in with a blink before the hit (as Click), chevrons converge linearly and lock 0.25 s early.',
+    note: 'Diamond outline grows from edge midpoints, core grows ease-out and settles early (as Click), chevrons slide in ease-out and settle by p = 0.45.',
   },
   clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),

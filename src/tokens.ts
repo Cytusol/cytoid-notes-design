@@ -79,8 +79,6 @@ export const tokens = {
   time: {
     /** enter (approach) clip: ends exactly at the hit time */
     enter: 1.2,
-    /** flick arrows lock this long before the hit (Cytoid: min(0.25s, half window)) */
-    flickLock: 0.25,
     /** hold press-in */
     holdPress: 0.2,
     /** hold loop period */

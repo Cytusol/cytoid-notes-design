@@ -8,7 +8,8 @@
  *
  *  0.00–0.10  fade in
  *  0.00–0.50  note scales 0.62 → 1, ring assembles from 3 arcs (0–0.40)
- *  0.00–0.94  core grows ease-in (cubic) from a small dot to 0.8·inner — slow, then fast;
+ *  0.00–0.94  core grows ease-out (cubic) from a small dot to 0.8·inner — fast at spawn,
+ *             settled well before the hit (no late rush to read);
  *             colours: core depth 2 → 3, background depth 2 → 1 (ease-in-out),
  *             with the lightness steps compressed (see DEPTH_CONTRAST)
  *  0.68–1.00  approach ring contracts *linearly in time* from 1.9 R onto the ring
@@ -18,8 +19,8 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { mix, hexToOklch, oklch } from '../core/color'
-import { bump, inCubic, inOutQuad, lerp, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { hexToOklch, mix, oklch } from '../core/color'
+import { bump, inOutQuad, lerp, outCubic, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 import { makeClearClips, makeMissClip } from './effects'
@@ -78,10 +79,11 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const build = outQuart(seg(p, 0, 0.4))
   const scale = lerp(0.62, 1, outCubic(seg(p, 0, 0.5)))
 
-  // core: small dot → full, accelerating
-  const g = inCubic(seg(p, 0.08, CLICK_TIMING.coreFull))
+  // core: small dot → full, ease-out — most of the growth happens right after
+  // the spawn, then it settles; nothing accelerates toward the hit
+  const g = outCubic(seg(p, 0, CLICK_TIMING.coreFull))
   // the core stops at 0.8·inner: a rim of the note colour stays visible at the hit (hue identity)
-  const coreR = inner * CORE_MAX * lerp(0.16, 1, g) * seg(p, 0.02, 0.12)
+  const coreR = inner * CORE_MAX * lerp(0.16, 1, g) * seg(p, 0, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
   const depth = depthColors(p, ctx)
 
@@ -120,7 +122,7 @@ export const click: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: (p, ctx) => clickEnter(p, ctx),
-    note: 'Cytus II-style timing: calm pre-roll, core grows ease-in, thin approach ring converges linearly over the last third, white blink right before the hit.',
+    note: 'Core grows ease-out from the spawn and settles early; thin approach ring converges linearly over the last third, white blink right before the hit.',
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, seed: 1 }),
   miss: makeMissClip('circle'),
