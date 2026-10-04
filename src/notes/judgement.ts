@@ -58,8 +58,8 @@ export const JUDGEMENT_TEXT: Record<Grade, string> = {
   miss: 'MISS',
 }
 
-/** Cap height in px for a context. */
-export const judgementCapHeight = (ctx: DrawContext) => ctx.unit * 0.17
+/** Cap height in px for a context (reduced from the original 0.17 — smaller text glares less). */
+export const judgementCapHeight = (ctx: DrawContext) => ctx.unit * 0.12
 
 /** Where the text centre sits relative to the note centre: the centre of the effect. */
 export function judgementOffset(_ctx: DrawContext): { x: number, y: number } {
