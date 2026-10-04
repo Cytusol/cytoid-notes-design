@@ -29,7 +29,10 @@ export interface NotePalette {
   deep: string
   /** lighter step — highlights, flashes */
   light: string
-  /** pale, high-contrast core on top of the fill (Click / Flick timing core) */
+  /**
+   * depth 3 of the 1-2-3 depth scale (deep · fill · core): bright but still
+   * saturated — the Click / Flick timing core
+   */
   core: string
   /** dim track colour (bodies, ghost shapes) */
   track: string
@@ -73,7 +76,7 @@ export function derivePalette(input: ColorInput, opts: { saturation?: number, ri
     fill: oklch(l, c, h),
     deep: oklch(l - 0.17, c * 0.9, h),
     light: oklch(Math.min(0.97, l + 0.13), c * 0.55, h),
-    core: oklch(Math.min(0.97, l + 0.2), c * 0.45, h),
+    core: oklch(Math.min(0.95, l + 0.12), c * 0.8, h),
     track: oklch(l * 0.55, c * 0.55, h),
     ring: opts.ring ?? tokens.ring,
     ink: oklch(0.24, Math.min(0.04, c * 0.3), h),

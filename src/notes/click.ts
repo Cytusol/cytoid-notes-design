@@ -1,5 +1,5 @@
 /**
- * CLICK — circle, white ring, solid colour ball + pale growing core.
+ * CLICK — circle, white ring, solid colour ball + growing core on a 1-2-3 depth scale.
  *
  * Timing feedback follows the structure of Cytus II's click (studied frame by
  * frame): a calm pre-roll, then an *accelerating* finish with converging
@@ -8,7 +8,8 @@
  *
  *  0.00–0.10  fade in
  *  0.00–0.50  note scales 0.62 → 1, ring assembles from 3 arcs (0–0.40)
- *  0.00–0.94  pale core grows ease-in (cubic) from a small dot to 0.8·inner — slow, then fast
+ *  0.00–0.94  core grows ease-in (cubic) from a small dot to 0.8·inner — slow, then fast;
+ *             colours: core depth 2 → 3, background depth 2 → 1 (ease-in-out)
  *  0.68–1.00  approach ring contracts *linearly in time* from 1.9 R onto the ring
  *             (thin, ≤ 50 % opacity — a peripheral cue, not a decoration)
  *  0.92–1.00  blink: core flashes white and the ring thickens, settling exactly
@@ -16,7 +17,8 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { bump, inCubic, lerp, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { mix } from '../core/color'
+import { bump, inCubic, inOutQuad, lerp, outCubic, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 import { makeClearClips, makeMissClip } from './effects'
@@ -32,6 +34,16 @@ export const CORE_MAX = 0.8
 
 /** Phase boundaries (normalised). */
 export const CLICK_TIMING = { approachFrom: 0.68, coreFull: 0.94, blinkFrom: 0.92 }
+
+/**
+ * Depth 1-2-3 colour progression (deep · fill · core). Everything starts at
+ * depth 2; as the hit approaches the core rises 2 → 3 while the background
+ * sinks 2 → 1, so contrast — not whiteness — carries the timing.
+ */
+export function depthColors(p: number, ctx: DrawContext) {
+  const k = inOutQuad(seg(p, 0.1, CLICK_TIMING.coreFull))
+  return { base: mix(ctx.palette.fill, ctx.palette.deep, k), core: mix(ctx.palette.fill, ctx.palette.core, k) }
+}
 
 export interface ClickOptions {
   /** extra glyph drawn above the core (click-drag head arrow) */
@@ -52,6 +64,7 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   // the core stops at 0.8·inner: a rim of the note colour stays visible at the hit (hue identity)
   const coreR = inner * CORE_MAX * lerp(0.16, 1, g) * seg(p, 0.02, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
+  const depth = depthColors(p, ctx)
 
   // approach ring: linear in time so its speed is readable
   const ap = seg(p, CLICK_TIMING.approachFrom, 1)
@@ -60,10 +73,10 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     : null
 
   const body = group([
-    // solid colour ball from the first frame; a pale core grows inside it (Cytus II: bright core in a dark shell)
-    disk(inner + 0.5, ctx.palette.fill),
-    disk(coreR, ctx.palette.core),
-    blink > 0 ? disk(coreR, ctx.palette.ring, 0.75 * blink) : null,
+    // solid ball from the first frame; depth 2 → core rises to 3, background sinks to 1
+    disk(inner + 0.5, depth.base),
+    disk(coreR, depth.core),
+    blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
     assemblingRing(R - W / 2, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, 3, build, lerp(-TAU / 6, 0, build)),
   ].filter(Boolean) as SceneNode[], { transform: { scale } })

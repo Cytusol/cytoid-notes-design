@@ -65,8 +65,6 @@ export const tokens = {
     ring: 0.085,
     /** secondary / decorative hairlines */
     hair: 0.022,
-    /** ~1 px fine line at 1x (hold inner ring) */
-    fine: 0.007,
     /** hold progress ring */
     progress: 0.07,
     /** hold body width (Cytoid HoldLine: 0.56 × 1.133 world / 2.235 click ≈ 0.284) */

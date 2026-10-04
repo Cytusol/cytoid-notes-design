@@ -12,9 +12,9 @@ import type { DrawContext, NoteDesign } from './types'
 import { bump, inCubic, lerp, outBack, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { tokens } from '../tokens'
-import { CLICK_TIMING, CORE_MAX } from './click'
+import { CLICK_TIMING, CORE_MAX, depthColors } from './click'
 import { makeClearClips, makeMissClip } from './effects'
-import { diamond } from './parts'
+import { diamond, flickChevron } from './parts'
 
 /**
  * Normalised time at which the arrows lock. Cytoid: arrows close
@@ -29,8 +29,8 @@ export function flickLock(approach: number = tokens.time.enter): number {
 export const FLICK_LOCK = flickLock()
 
 function flickArrow(size: number, width: number, color: string): SceneNode {
-  // ">" pointing right
-  return { type: 'poly', points: [[-size * 0.32, -size * 0.6], [size * 0.32, 0], [-size * 0.32, size * 0.6]], stroke: color, strokeWidth: width, join: 'miter' }
+  // ">" pointing right, 90° like the diamond corner
+  return flickChevron(size * 0.3, size * 0.6, width, color)
 }
 
 /** Diamond outline drawn edge by edge; k ∈ [0,1]. */
@@ -76,10 +76,11 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   // same timing language as Click: ease-in core + blink right before the hit
   const g = lerp(0.16, 1, inCubic(seg(p, 0.08, CLICK_TIMING.coreFull))) * seg(p, 0.02, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
+  const depth = depthColors(p, ctx)
   const body = group([
-    diamond(inner + W * 0.15, { fill: ctx.palette.fill }),
-    diamond(inner * CORE_MAX * g, { fill: ctx.palette.core }),
-    blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.75 * blink }) : null,
+    diamond(inner + W * 0.15, { fill: depth.base }),
+    diamond(inner * CORE_MAX * g, { fill: depth.core }),
+    blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
     { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette.deep, strokeWidth: W * 0.5, opacity: seg(p, 0.5, 0.8) },
     buildingDiamond(rv, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, build),

@@ -8,7 +8,7 @@ import type { ClearGrade, Clip, DrawContext } from './types'
 import { lerp, outCubic, outExpo, outQuad, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
-import { arc, capsule, dashedRing, diamond, disk, ring, shards } from './parts'
+import { arc, capsule, dashedRing, diamond, disk, flickChevron, ring, shards } from './parts'
 
 export type EffectShape = 'circle' | 'diamond' | 'capsule'
 
@@ -126,16 +126,8 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
       if (ka <= 0 || ka >= 1)
         continue
       const x = R * lerp(0.2, 1.5 - i * 0.42, outQuart(ka))
-      const h = R * 1.05 * lerp(0.85, 1.1, ka) // half height: tall
-      const d = h * 0.62 // depth: a wide, open chevron
-      arrows.push({
-        type: 'poly',
-        points: [[x - d, -h], [x, 0], [x - d, h]],
-        stroke: color,
-        strokeWidth: W * lerp(1.5, 0.8, ka),
-        join: 'miter',
-        opacity: 0.42 * seg(ka, 0, 0.15) * (1 - seg(ka, 0.45, 1)) * (1 - i * 0.18),
-      })
+      // fixed size, stroke and 90° angle (same as the note's chevrons) for the whole animation
+      arrows.push(flickChevron(x, R * 0.95, W * 1.2, color, 0.42 * seg(ka, 0, 0.15) * (1 - seg(ka, 0.45, 1)) * (1 - i * 0.18)))
     }
     extra = group([streaks, ...arrows])
   }

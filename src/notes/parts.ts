@@ -72,6 +72,15 @@ export function chevron(size: number, width: number, stroke: string, opacity = 1
   }
 }
 
+/**
+ * Flick chevron ">" with its tip at (x, 0). Opening angle is 90° — the same as
+ * the flick diamond's corner — and it is shared by the note and its clear
+ * effect so the angle never changes. `h` = half height (= depth).
+ */
+export function flickChevron(x: number, h: number, width: number, color: string, opacity = 1): SceneNode {
+  return { type: 'poly', points: [[x - h, -h], [x, 0], [x - h, h]], stroke: color, strokeWidth: width, join: 'miter', opacity }
+}
+
 /** Solid arrow head (filled triangle-chevron, Cytoid CDragFill style). */
 export function arrowHead(size: number, fill: string, opacity = 1): SceneNode {
   const s = size / 2
