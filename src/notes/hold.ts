@@ -11,7 +11,7 @@
  * Holding is split into independent layers (frame-friendly), composed as
  * press → loop → progress (bottom to top):
  *   press    (once, 0.2 s)   head sinks to 0.86 scale (glyph stays)
- *   loop     (loop, 1 s)     glyph ping inside + two outer ripples (seamless)
+ *   loop     (loop, 0.6 s)   dark-core ping inside + two outer ripples (seamless)
  *   progress (progress 0–1)  Cytoid-style progress ring: white lead (4/3·p) + fill (p)
  * Bodies (see ./bodies.ts) are stretched elements, not frame clips.
  */
@@ -28,15 +28,20 @@ const PRESSED = 0.86
 /** Cytoid ProgressRing: outer radius ≈ 1.42 R, thickness ≈ 0.083 u */
 const PROGRESS_R = 1.34
 
-/** Centre glyph: circle (hold) or square (long hold), outline only. `r` = circle radius / square half-size. */
+/**
+ * Centre glyph: circle (hold) or square (long hold), outline only. `r` = circle
+ * radius; the square is drawn smaller (half-size 0.82·r) so both read as the
+ * same visual area.
+ */
 function glyphShape(long: boolean, r: number, width: number, color: string, opacity = 1): SceneNode {
+  const s = r * 0.82
   return long
-    ? { type: 'rect', x: -r, y: -r, w: r * 2, h: r * 2, stroke: color, strokeWidth: width, join: 'miter', opacity }
+    ? { type: 'rect', x: -s, y: -s, w: s * 2, h: s * 2, stroke: color, strokeWidth: width, join: 'miter', opacity }
     : ring(r, width, color, opacity)
 }
 
 const INNER_RING = 0.55
-const GLYPH = 0.26
+const GLYPH = 0.2
 
 /** Steady-state head; `k` = build progress 0..1 (fast), `glyph` = centre glyph reveal. */
 function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number): SceneNode {
@@ -102,9 +107,9 @@ function holdPress(long: boolean) {
 
 /**
  * While held:
- *  - inside: the (static) centre glyph emits a Tailwind-style *ping* — a copy
- *    scales 1 → 2 and fades out over the first 75 % of the period,
- *    ease cubic-bezier(0, 0, 0.2, 1) ≈ outCubic;
+ *  - inside: the dark core itself pings (Tailwind `animate-ping`): a copy of
+ *    the core disc scales 1 → 2 and fades out over the first 75 % of the
+ *    period, ease ≈ cubic-bezier(0, 0, 0.2, 1). The glyph stays still on top.
  *  - outside: two thin ripples, half a period apart, beyond the progress ring.
  * Both are seamless over `holdLoop`.
  */
@@ -114,17 +119,20 @@ function holdLoop(long: boolean) {
     const hair = ctx.unit * tokens.stroke.hair
     const P = tokens.time.holdLoop
     const u = (((t % P) + P) % P) / P
-    const gw = ctx.unit * tokens.stroke.hair * 1.6
     const k = outCubic(seg(u, 0, 0.75))
+    const coreR = R * PRESSED * INNER_RING
+    // clipped to the head interior so the ping never dims the white ring
+    const innerPressed = (R - ringWidth(ctx)) * PRESSED
     const ping = u < 0.75
-      ? glyphShape(long, R * PRESSED * GLYPH * lerp(1, 2, k), gw * lerp(1, 0.5, k), ctx.palette.ring, 1 - k)
+      ? group([disk(coreR * lerp(1, 2, k), ctx.palette.deep, 0.8 * (1 - k))], { clip: { type: 'circle', r: innerPressed } })
       : null
+    const glyph = glyphShape(long, R * PRESSED * GLYPH, ctx.unit * tokens.stroke.hair * 1.6 * PRESSED, ctx.palette.ring)
     const ripples: SceneNode[] = []
     for (let i = 0; i < 2; i++) {
       const v = (u + i / 2) % 1
       ripples.push(ring(R * lerp(PROGRESS_R + 0.12, long ? 2.05 : 1.85, outCubic(v)), hair * lerp(2.4, 0.6, v), ctx.palette.light, (1 - v) ** 1.5 * 0.85))
     }
-    return group([...ripples, ping].filter(Boolean) as SceneNode[])
+    return group([...ripples, ping, glyph].filter(Boolean) as SceneNode[])
   }
 }
 
@@ -157,7 +165,7 @@ function makeHold(long: boolean): NoteDesign {
     },
     hold: {
       press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86; the centre glyph stays.' },
-      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'Centre glyph pings (Tailwind-style scale 1→2 + fade) and two outer ripples pulse. Drawn above the head. Seamless.' },
+      loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'The dark core pings (Tailwind-style scale 1→2 + fade) under the still glyph; two outer ripples pulse. Drawn above the head. Seamless.' },
       progress: { id: 'hold-progress', mode: 'progress', duration: 1, draw: holdProgress(long), note: 'Cytoid-style progress ring: white lead at 4/3·p, fill at p.' },
     },
     clear: makeClearClips({ shape: 'circle', reach: long ? 1.6 : 1.5, sectors: 24, extra: long ? 'beam' : 'double', seed: long ? 4 : 3 }),

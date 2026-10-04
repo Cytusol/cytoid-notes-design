@@ -1,5 +1,5 @@
 /**
- * CLICK — circle, white ring, solid deep base + fill core (reads as a ball, not a ring).
+ * CLICK — circle, white ring, solid colour ball + pale growing core.
  *
  * Timing feedback follows the structure of Cytus II's click (studied frame by
  * frame): a calm pre-roll, then an *accelerating* finish with converging
@@ -8,7 +8,7 @@
  *
  *  0.00–0.10  fade in
  *  0.00–0.50  note scales 0.62 → 1, ring assembles from 3 arcs (0–0.40)
- *  0.00–0.94  core grows ease-in (cubic) from a small dot to full — slow, then fast
+ *  0.00–0.94  pale core grows ease-in (cubic) from a small dot to 0.8·inner — slow, then fast
  *  0.68–1.00  approach ring contracts *linearly in time* from 1.9 R onto the ring
  *             (thin, ≤ 50 % opacity — a peripheral cue, not a decoration)
  *  0.92–1.00  blink: core flashes white and the ring thickens, settling exactly
@@ -26,6 +26,9 @@ import { arrowHead, assemblingRing, disk, ring } from './parts'
 export function ringWidth(ctx: DrawContext) {
   return ctx.unit * tokens.stroke.ring * (ctx.size / ctx.unit) ** 0.5
 }
+
+/** Max core radius relative to the inner radius. */
+export const CORE_MAX = 0.8
 
 /** Phase boundaries (normalised). */
 export const CLICK_TIMING = { approachFrom: 0.68, coreFull: 0.94, blinkFrom: 0.92 }
@@ -46,7 +49,8 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
 
   // core: small dot → full, accelerating
   const g = inCubic(seg(p, 0.08, CLICK_TIMING.coreFull))
-  const coreR = inner * lerp(0.16, 1, g) * seg(p, 0.02, 0.12)
+  // the core stops at 0.8·inner: a rim of the note colour stays visible at the hit (hue identity)
+  const coreR = inner * CORE_MAX * lerp(0.16, 1, g) * seg(p, 0.02, 0.12)
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
 
   // approach ring: linear in time so its speed is readable
@@ -56,9 +60,9 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     : null
 
   const body = group([
-    // solid deep base: the note reads as a filled ball from the first frame, not a hollow ring
-    disk(inner + 0.5, ctx.palette.deep),
-    disk(coreR, ctx.palette.fill),
+    // solid colour ball from the first frame; a pale core grows inside it (Cytus II: bright core in a dark shell)
+    disk(inner + 0.5, ctx.palette.fill),
+    disk(coreR, ctx.palette.core),
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.75 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
     assemblingRing(R - W / 2, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, 3, build, lerp(-TAU / 6, 0, build)),

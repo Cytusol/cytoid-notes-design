@@ -117,22 +117,24 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
       { type: 'rect', x: off, y: -th / 2, w: len, h: th, fill: color },
       { type: 'rect', x: -off - len, y: -th / 2, w: len, h: th, fill: color },
     ], { opacity: op })
-    // swipe direction: 1–3 chevrons fly to the right (rotate the whole effect for other directions)
+    // swipe direction: 1–3 big, faint, wide chevrons sweep to the right
+    // (baked pointing right — rotate the whole effect for other swipe directions)
     const n = FLICK_ARROWS[grade]
     const arrows: SceneNode[] = []
     for (let i = 0; i < n; i++) {
-      const ka = seg(u, i * 0.07, 0.62 + i * 0.07)
+      const ka = seg(u, i * 0.08, 0.7 + i * 0.08)
       if (ka <= 0 || ka >= 1)
         continue
-      const x = R * lerp(0.45, 1.85 - i * 0.38, outQuart(ka))
-      const sz = R * 0.5 * lerp(1, 0.8, ka) * (1 - i * 0.12)
+      const x = R * lerp(0.2, 1.5 - i * 0.42, outQuart(ka))
+      const h = R * 1.05 * lerp(0.85, 1.1, ka) // half height: tall
+      const d = h * 0.62 // depth: a wide, open chevron
       arrows.push({
         type: 'poly',
-        points: [[x - sz * 0.32, -sz * 0.6], [x + sz * 0.32, 0], [x - sz * 0.32, sz * 0.6]],
-        stroke: i === 0 && grade === 'perfect' ? '#FFFFFF' : color,
-        strokeWidth: W * lerp(0.75, 0.4, ka),
+        points: [[x - d, -h], [x, 0], [x - d, h]],
+        stroke: color,
+        strokeWidth: W * lerp(1.5, 0.8, ka),
         join: 'miter',
-        opacity: seg(ka, 0, 0.12) * (1 - seg(ka, 0.55, 1)),
+        opacity: 0.42 * seg(ka, 0, 0.15) * (1 - seg(ka, 0.45, 1)) * (1 - i * 0.18),
       })
     }
     extra = group([streaks, ...arrows])
