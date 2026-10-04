@@ -87,10 +87,11 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
   const depth = depthColors(p, ctx)
 
-  // approach ring: linear in time so its speed is readable
+  // approach ring: linear in time so its speed is readable; hairline-thick
+  // (half of the original 1.2–2.2 × hair) and ≤ 25 % opacity — peripheral only
   const ap = seg(p, CLICK_TIMING.approachFrom, 1)
   const approach = ap > 0 && ap < 1
-    ? ring(lerp(R * 1.9, R - W / 2, ap), hair * lerp(1.2, 2.2, ap), ctx.palette.ring, 0.5 * seg(ap, 0, 0.3))
+    ? ring(lerp(R * 1.9, R - W / 2, ap), hair * lerp(0.6, 1.1, ap), ctx.palette.ring, 0.25 * seg(ap, 0, 0.3))
     : null
 
   const body = group([
