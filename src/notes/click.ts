@@ -36,13 +36,14 @@ export const CORE_MAX = 0.8
 export const CLICK_TIMING = { approachFrom: 0.68, coreFull: 0.94, blinkFrom: 0.92 }
 
 /**
- * Depth 1-2-3 colour progression (deep · fill · core). Everything starts at
- * depth 2; as the hit approaches the core rises 2 → 3 while the background
- * sinks 2 → 1, so contrast — not whiteness — carries the timing.
+ * Depth 1-2-3 colour progression: 1 = track (darkest), 2 = deep, 3 = fill
+ * (the note colour). Everything starts at depth 2; as the hit approaches the
+ * core rises 2 → 3 while the background sinks 2 → 1, so contrast — not
+ * whiteness — carries the timing, and the hit pose shows the true colour.
  */
 export function depthColors(p: number, ctx: DrawContext) {
   const k = inOutQuad(seg(p, 0.1, CLICK_TIMING.coreFull))
-  return { base: mix(ctx.palette.fill, ctx.palette.deep, k), core: mix(ctx.palette.fill, ctx.palette.core, k) }
+  return { base: mix(ctx.palette.deep, ctx.palette.track, k), core: mix(ctx.palette.deep, ctx.palette.fill, k) }
 }
 
 export interface ClickOptions {

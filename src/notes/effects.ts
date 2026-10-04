@@ -127,7 +127,8 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
         continue
       const x = R * lerp(0.2, 1.5 - i * 0.42, outQuart(ka))
       // fixed size, stroke and 90° angle (same as the note's chevrons) for the whole animation
-      arrows.push(flickChevron(x, R * 0.95, W * 1.2, color, 0.42 * seg(ka, 0, 0.15) * (1 - seg(ka, 0.45, 1)) * (1 - i * 0.18)))
+      // about as tall as the flick's centre slit
+      arrows.push(flickChevron(x, R * 0.38, W * 1.1, color, 0.42 * seg(ka, 0, 0.15) * (1 - seg(ka, 0.45, 1)) * (1 - i * 0.18)))
     }
     extra = group([streaks, ...arrows])
   }
