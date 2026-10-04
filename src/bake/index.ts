@@ -6,15 +6,15 @@ import type { Buffer } from 'node:buffer'
 import type { SceneNode } from '../core/scene'
 import type { Clip, DrawContext } from '../notes/types'
 import type { Palette, PaletteOptions } from '../palette'
-import type { Direction, NoteKind } from '../tokens'
+import type { Direction, Grade, NoteKind } from '../tokens'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Resvg } from '@resvg/resvg-js'
 import { bounds, group } from '../core/scene'
-import { clipsOf, createContext, designs, dragLine, holdBody, holdDashPeriod, longHoldBody } from '../notes'
+import { clipsOf, createContext, designs, dragLine, holdBody, holdDashPeriod, judgementCapHeight, judgementClips, longHoldBody } from '../notes'
 import { createPalette, exportPalette } from '../palette'
 import { toSVGMarkup } from '../render/svg'
-import { NOTE_KINDS, tokens } from '../tokens'
+import { GRADES, NOTE_KINDS, tokens } from '../tokens'
 import { CYLHEIM_PX_PER_UNIT, CYLHEIM_TARGETS, cylheimSamples } from './cylheim'
 import { sampleTimes } from './sample'
 
@@ -59,6 +59,11 @@ export interface FrameManifest {
   pxPerUnit: number
   palette: ReturnType<typeof exportPalette>
   notes: Partial<Record<NoteKind, Partial<Record<Direction, Record<string, ClipManifest>>>>>
+  /**
+   * Judgement text per grade, shared by all kinds. Textures are centred on the
+   * text; place the text centre on the note centre (it sits inside the effect).
+   */
+  judgement: Partial<Record<Grade, ClipManifest>> & { capHeight?: number, placement?: string }
   bodies: Partial<Record<Direction, Record<string, { file: string, width: number, height: number, repeat: 'y' | 'none', note: string }>>>
 }
 
@@ -159,6 +164,7 @@ export async function bake(options: BakeOptions): Promise<FrameManifest> {
     pxPerUnit: tokens.unit * scale,
     palette: exportPalette(palette),
     notes: {},
+    judgement: {},
     bodies: {},
   }
   await mkdir(options.outDir, { recursive: true })
@@ -172,6 +178,14 @@ export async function bake(options: BakeOptions): Promise<FrameManifest> {
       }
       ;(manifest.notes[kind] ??= {})[direction] = entry
     }
+  }
+  {
+    const ctx = createContext('click', { palette, scale })
+    for (const grade of GRADES)
+      manifest.judgement[grade] = await bakeClip(judgementClips[grade], ctx, options.outDir, `judgement/${grade}`, o)
+    manifest.judgement.capHeight = judgementCapHeight(ctx)
+    manifest.judgement.placement = 'text centre on the note centre (inside the clear / miss effect)'
+    log('judgement')
   }
   for (const direction of directions) {
     manifest.bodies[direction] = {}

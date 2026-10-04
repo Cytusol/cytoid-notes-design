@@ -151,18 +151,13 @@ export function missEffect(shape: EffectShape, u: number, ctx: DrawContext): Sce
   const gray = ctx.grades.miss
   const k = outCubic(u)
   const op = 1 - seg(u, 0.25, 1)
-  // the note "powers down": fill drains to a dim ghost, outline shrinks, a cross is struck
+  // the note "powers down": fill drains to a dim ghost, outline shrinks and sinks
   const ghost = group([
     solid(shape, R * lerp(0.92, 0.75, k), ctx.palette.track, ctx, 0.9),
     outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
   ], { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
-  const half = shape === 'capsule' ? ctx.size * 0.15 : R
-  const c = half * (shape === 'capsule' ? 0.55 : 0.38) * outQuart(seg(u, 0.05, 0.4))
-  const cross = group([
-    { type: 'line', x1: -c, y1: -c, x2: c, y2: c, stroke: gray, strokeWidth: W * 0.8, cap: 'round' },
-    { type: 'line', x1: c, y1: -c, x2: -c, y2: c, stroke: gray, strokeWidth: W * 0.8, cap: 'round' },
-  ], { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
-  return group([ghost, cross])
+  // no cross: the MISS judgement text carries the meaning
+  return ghost
 }
 
 export function makeClearClips(flavor: ClearFlavor): Record<ClearGrade, Clip> {

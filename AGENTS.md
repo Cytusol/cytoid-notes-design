@@ -8,7 +8,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 - `src/tokens.ts` — sizes, strokes, durations, default hues, grade colours. Change numbers here first.
 - `src/palette.ts` — OKLCH hue-driven palette (`createPalette`, `derivePalette`, `fitLightness`).
 - `src/core/` — `scene.ts` (6 primitives + group, bounds), `ease.ts` (seg/lerp/easings/rng), `color.ts` (oklch).
-- `src/notes/` — one file per family (`click`, `hold`, `drag`, `flick`, `drop`), shared `parts.ts`, `effects.ts` (clear/miss), `bodies.ts` (hold body, long hold body, drag line), `index.ts` (registry `designs`, `createContext`, `renderNote`, `clipsOf`).
+- `src/notes/` — one file per family (`click`, `hold`, `drag`, `flick`, `drop`), shared `parts.ts`, `effects.ts` (clear/miss), `bodies.ts` (hold body, long hold body, drag line), `judgement.ts` (judgement text: custom chamfered stroke font, centred in the effect), `index.ts` (registry `designs`, `createContext`, `renderNote`, `clipsOf`).
 - `src/render/` — `canvas.ts` (Canvas2D), `svg.ts` (SVG string).
 - `src/bake/` — Node-only baker (resvg): `index.ts`, `sample.ts` (frame sampling rules, also exported from main entry), `cylheim.ts` (Cylheim file-name/timeline mapping). Exposed as `cytoid-notes-design/bake`.
 - `scripts/bake.ts` — CLI (`pnpm bake`), `scripts/sheet.ts` — contact sheets to `.sheets/` (`pnpm exec tsx scripts/sheet.ts click,hold [up|down]`).

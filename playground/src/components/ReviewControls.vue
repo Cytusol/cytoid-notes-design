@@ -10,6 +10,7 @@ import { review } from '../composables/useReview'
     <label>Judgement <select v-model="review.grade"><option v-for="grade in GRADES" :key="grade">{{ grade }}</option></select></label>
     <label>Surface <select v-model="review.background"><option value="dark">Dark stage</option><option value="light">Light</option><option value="checker">Checker</option></select></label>
     <label>Note scale <input v-model.number="review.scale" type="range" min="0.35" max="1.2" step="0.05"><span class="mono">{{ review.scale.toFixed(2) }}×</span></label>
+    <label><input v-model="review.judgement" type="checkbox">Judgement text</label>
     <button class="quiet" @click="review.playing = !review.playing">
       {{ review.playing ? 'Ⅱ Pause' : '▶ Play' }}
     </button>

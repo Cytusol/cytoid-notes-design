@@ -1,6 +1,6 @@
 import type { SceneNode } from '../core/scene'
 import type { Palette } from '../palette'
-import type { Direction, NoteKind } from '../tokens'
+import type { Direction, Grade, NoteKind } from '../tokens'
 import type { Clip, DrawContext, NoteDesign, NoteState } from './types'
 import { group } from '../core/scene'
 import { defaultPalette } from '../palette'
@@ -10,6 +10,7 @@ import { clickDragChild, dragChild, dragHead } from './drag'
 import { dropClick, dropDrag } from './drop'
 import { flick } from './flick'
 import { hold, longHold } from './hold'
+import { judgementClips, judgementOffset } from './judgement'
 
 export const designs: Record<NoteKind, NoteDesign> = {
   'click': click,
@@ -67,12 +68,24 @@ export function clipsOf(design: NoteDesign): Clip[] {
   ]
 }
 
+export interface RenderOptions {
+  /** draw the judgement text (PERFECT / GREAT / …) with clear & miss effects. Default true. */
+  judgement?: boolean
+}
+
+/** Judgement text placed above the note (t = seconds since judgement). */
+export function renderJudgement(grade: Grade, t: number, ctx: DrawContext): SceneNode {
+  const o = judgementOffset(ctx)
+  return group([judgementClips[grade].draw(t, ctx)], { transform: o })
+}
+
 /**
  * Composed vector renderer: one call per note per frame.
  * (Bodies / drag lines are separate — see `bodies.ts`.)
  */
-export function renderNote(kind: NoteKind, state: NoteState, ctx: DrawContext = createContext(kind)): SceneNode {
+export function renderNote(kind: NoteKind, state: NoteState, ctx: DrawContext = createContext(kind), options: RenderOptions = {}): SceneNode {
   const d = designs[kind]
+  const text = options.judgement ?? true
   switch (state.phase) {
     case 'enter':
       return d.enter.draw(state.p, ctx)
@@ -86,12 +99,17 @@ export function renderNote(kind: NoteKind, state: NoteState, ctx: DrawContext = 
         d.hold.progress.draw(state.progress, ctx),
       ])
     }
-    case 'clear':
-      return d.clear[state.grade].draw(state.t, ctx)
-    case 'miss':
-      return d.miss.draw(state.t, ctx)
+    case 'clear': {
+      const fx = d.clear[state.grade].draw(state.t, ctx)
+      return text ? group([fx, renderJudgement(state.grade, state.t, ctx)]) : fx
+    }
+    case 'miss': {
+      const fx = d.miss.draw(state.t, ctx)
+      return text ? group([fx, renderJudgement('miss', state.t, ctx)]) : fx
+    }
   }
 }
 
 export * from './bodies'
+export * from './judgement'
 export type * from './types'

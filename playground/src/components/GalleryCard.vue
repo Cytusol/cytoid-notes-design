@@ -26,7 +26,7 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
     const appear = state.phase === 'enter' ? state.p : 1
     drawScene(ctx, props.kind === 'hold' ? holdBody({ length: 100, progress, appear, t: elapsed }, dc) : longHoldBody({ top: height / 2, bottom: height / 2, progress, appear }, dc))
   }
-  drawScene(ctx, renderNote(props.kind, state, dc))
+  drawScene(ctx, renderNote(props.kind, state, dc, { judgement: review.judgement }))
 }
 </script>
 

@@ -66,7 +66,7 @@ function stateAt(note: ChartNote, t: number, grade: Grade): NoteState | null {
   const since = t - (note.end ?? note.hit)
   return since <= tokens.time.clear[grade] ? { phase: 'clear', grade, t: since } : null
 }
-export function paintChart(ctx: CanvasRenderingContext2D, width: number, height: number, time: number, palette: Palette, mix: GradeMix, scale: number) {
+export function paintChart(ctx: CanvasRenderingContext2D, width: number, height: number, time: number, palette: Palette, mix: GradeMix, scale: number, judgement = true) {
   const phase = time % 1
   const direction = directionFor(time)
   const lineY = 35 + (direction === 'up' ? 1 - phase : phase) * (height - 70)
@@ -124,7 +124,7 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
           ? longHoldBody({ top: pos.y - 35, bottom: height - 35 - pos.y, progress, appear }, dc)
           : holdBody({ length: (note.end - note.hit) * (height - 70), progress, appear, t: local - note.hit }, dc))
       }
-      drawScene(ctx, renderNote(note.kind, state, dc))
+      drawScene(ctx, renderNote(note.kind, state, dc, { judgement }))
       ctx.restore()
     })
   }

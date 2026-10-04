@@ -11,7 +11,7 @@
 import type { SceneNode } from '../core/scene'
 import type { DrawContext } from '../notes/types'
 import type { Direction, NoteKind } from '../tokens'
-import { designs } from '../notes'
+import { designs, judgementClips } from '../notes'
 import { tokens } from '../tokens'
 
 export interface CylheimTarget {
@@ -83,6 +83,9 @@ export const CYLHEIM_TARGETS: CylheimTarget[] = [
   { pattern: 'Note-Flick-Bloom-Textures-Flick_BoomR_{frame}.png', kind: 'flick', timeline: hitTiming(41, 59, 4), sample: spread(tokens.time.clear.perfect), draw: designs.flick.clear.perfect.draw },
   { pattern: 'Note-Hold-Bloom-Textures-Hold_Boom_{frame}.png', kind: 'hold', timeline: hitTiming(57, 74, 4), sample: spread(tokens.time.clear.perfect), draw: designs.hold.clear.perfect.draw },
   { pattern: 'Note-LongHold-Bloom-Textures-LongHold_Boom_{frame}.png', kind: 'long-hold', timeline: hitTiming(58, 75, 3), sample: spread(tokens.time.clear.perfect), draw: designs['long-hold'].clear.perfect.draw },
+
+  // hit text (pixi-runtime-judgment-effect-provider: 13 frames, 30 fps), centred on the text
+  { pattern: 'PERFECT_Gold_top_{frame}.png', kind: 'click', timeline: range(146, 158), sample: spread(tokens.time.clear.perfect), draw: judgementClips.perfect.draw, note: 'Our text is centred; Cylheim positions its own hit text.' },
 
   { pattern: 'Note-Hold-Holding-Textures-Hold_Button_in-Hold_Button_in_{frame}.png', kind: 'hold', timeline: range(41, 49), sample: spread(tokens.time.holdPress), draw: designs.hold.hold!.press.draw, note: 'Cylheim loops this sequence; our press settles on its last frame.' },
   { pattern: 'Note-LongHold-Holding-Textures-LongHold_Button_in-LongHold_Button_in_{frame}.png', kind: 'long-hold', timeline: range(41, 57), sample: spread(tokens.time.holdPress), draw: designs['long-hold'].hold!.press.draw },

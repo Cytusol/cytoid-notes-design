@@ -32,11 +32,12 @@ const samples = computed(() => Array.from({ length: count.value }, (_, i) => i /
     <label>Direction <select v-model="review.direction"><option>up</option><option>down</option></select></label>
     <label>Zoom <input v-model.number="zoom" type="range" min="1" max="4" step="0.25"><span class="mono">{{ zoom }}×</span></label>
     <label><input v-model="compare" type="checkbox">Compare ↑ / ↓</label>
+    <label><input v-model="review.judgement" type="checkbox">Judgement text</label>
   </div>
   <div class="inspector-stage surface" :class="[review.background, { compare }]">
-    <div><span class="canvas-label">{{ compare ? 'UP' : review.direction.toUpperCase() }} / LIVE VECTOR</span><NoteCanvas :kind="kind" :direction="compare ? 'up' : review.direction" :clip="clip" :x="x" :scale="zoom" :onion="onion" :fps="fps" :show-bounds="showBounds" /></div>
+    <div><span class="canvas-label">{{ compare ? 'UP' : review.direction.toUpperCase() }} / LIVE VECTOR</span><NoteCanvas :kind="kind" :direction="compare ? 'up' : review.direction" :clip="clip" :x="x" :scale="zoom" :onion="onion" :fps="fps" :show-bounds="showBounds" :judgement="review.judgement" /></div>
     <div v-if="compare">
-      <span class="canvas-label">DOWN / LIVE VECTOR</span><NoteCanvas :kind="kind" direction="down" :clip="clip" :x="x" :scale="zoom" :onion="onion" :fps="fps" :show-bounds="showBounds" />
+      <span class="canvas-label">DOWN / LIVE VECTOR</span><NoteCanvas :kind="kind" direction="down" :clip="clip" :x="x" :scale="zoom" :onion="onion" :fps="fps" :show-bounds="showBounds" :judgement="review.judgement" />
     </div>
   </div>
   <div class="transport panel">

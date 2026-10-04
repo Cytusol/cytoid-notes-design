@@ -6,7 +6,9 @@ import {
   createPalette,
   designs,
   frameIndex,
+  GRADES,
   hexToOklch,
+  judgementClips,
   NOTE_KINDS,
   oklch,
   renderNote,
@@ -74,6 +76,18 @@ describe('designs', () => {
       const ctx = createContext(kind)
       expect(toSVG(designs[kind].enter.draw(0.25, ctx)), kind).toBe(toSVG(designs[kind].enter.draw(1, ctx)))
     }
+  })
+
+  it('judgement text renders for every grade and fades out', () => {
+    const ctx = createContext('click')
+    for (const grade of GRADES) {
+      const clip = judgementClips[grade]
+      expect(bounds(clip.draw(clip.duration * 0.5, ctx)), grade).not.toBeNull()
+      expect(bounds(clip.draw(clip.duration, ctx)), grade).toBeNull()
+    }
+    const withText = toSVG(renderNote('click', { phase: 'clear', grade: 'perfect', t: 0.2 }))
+    const without = toSVG(renderNote('click', { phase: 'clear', grade: 'perfect', t: 0.2 }, undefined, { judgement: false }))
+    expect(withText.length).toBeGreaterThan(without.length)
   })
 
   it('hold loop is seamless', () => {

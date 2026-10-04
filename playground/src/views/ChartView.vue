@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import StageCanvas from '../components/StageCanvas.vue'
 import { chart, chartKinds, chartLength, directionFor, gradeFor, paintChart } from '../composables/chart'
 import { palette } from '../composables/usePalette'
+import { review } from '../composables/useReview'
 
 const playing = ref(true)
 const time = ref(0)
@@ -17,7 +18,7 @@ const judged = computed(() => chart.filter(n => (n.end ?? n.hit) <= time.value %
 function paint({ ctx, width, height, dt }: CanvasFrame) {
   if (playing.value)
     time.value += dt * speed.value
-  paintChart(ctx, width, height, time.value, palette.value, mix.value, scale.value)
+  paintChart(ctx, width, height, time.value, palette.value, mix.value, scale.value, review.judgement)
 }
 </script>
 
@@ -30,6 +31,7 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
     </button>
     <label>Judgements <select v-model="mix"><option value="perfect">All perfect</option><option value="mixed">Mixed grades</option><option value="misses">Include misses</option></select></label>
     <label>Speed <select v-model.number="speed"><option v-for="s in [0.25, 0.5, 1, 1.5, 2]" :key="s" :value="s">{{ s }}×</option></select></label>
+    <label><input v-model="review.judgement" type="checkbox">Judgement text</label>
     <label>Note scale <input v-model.number="scale" type="range" min="0.25" max="0.8" step="0.05"><span class="mono">{{ scale.toFixed(2) }}×</span></label>
   </div>
   <div class="chart-layout">
