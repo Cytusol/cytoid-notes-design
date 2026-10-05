@@ -3,21 +3,26 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
 
-# Builds land on the gh-pages branch: production at the root, PR previews under
-# pr-preview/<pr>/ (each PR keeps its own isolated URL).
+# Builds deploy to Cloudflare Pages:
+#   main  → production   https://cytoid-notes-design.pages.dev
+#   PR    → preview      https://<branch>.cytoid-notes-design.pages.dev
+# The deploy step is skipped (without failing) until the repo secrets
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are configured.
 concurrency:
   group: playground-${{ github.event_name == 'pull_request' && github.event.number || 'main' }}
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
-    if: github.event_name == 'push' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push builds to the gh-pages branch
-      pull-requests: write # post/update the preview-link comment
+      contents: read
+      pull-requests: write # preview-link comment
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -30,44 +35,18 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck && pnpm test
       - run: pnpm build:playground
-      - name: deploy production (site root)
-        if: github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v4
+      - name: deploy to Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: cloudflare/wrangler-action@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: playground/dist
-          publish_branch: gh-pages
-          keep_files: true # preserve pr-preview/ directories
-          commit_message: 'deploy production ${{ github.sha }}'
-      - name: deploy preview (pr-preview/<pr>/)
-        if: github.event_name == 'pull_request'
-        uses: rossjrw/pr-preview-action@v1
-        id: preview
-        with:
-          source-dir: playground/dist
-          umbrella-dir: pr-preview
-          preview-branch: gh-pages
-      - name: post preview link
-        if: github.event_name == 'pull_request'
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy playground/dist --project-name=cytoid-notes-design --branch=${{ github.event_name == 'pull_request' && github.head_ref || 'main' }} --commit-dirty=true
+      - name: preview link comment
+        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: preview
           message: |
-            🔮 Playground preview for this PR: **${{ steps.preview.outputs.preview_url }}**
-
-            Production: <https://cytusol.github.io/cytoid-notes-design/>
-            The preview lives under `pr-preview/${{ github.event.number }}/` and updates with every push.
-
-  cleanup-preview:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # remove the preview directory from gh-pages
-    steps:
-      - uses: actions/checkout@v4
-      - uses: rossjrw/pr-preview-action@v1
-        with:
-          source-dir: playground/dist # unused for removal
-          umbrella-dir: pr-preview
-          preview-branch: gh-pages
-          action: remove
+            🔮 Preview (this branch): <https://${{ github.head_ref }}.cytoid-notes-design.pages.dev>
+            🏠 Production: <https://cytoid-notes-design.pages.dev>
