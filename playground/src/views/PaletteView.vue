@@ -20,6 +20,7 @@ const presets: {
   { name: 'Cytoid classic', value: classic, colors: ['#35A7FF', '#FF5964', '#F2C85A'] },
   { name: 'Monochrome', value: { saturation: 0 }, colors: ['#a5a5a5', '#bdbdbd', '#d0d0d0'] },
   { name: 'Orchid', value: { hueShift: 45, saturation: 0.8 }, colors: ['#b390e5', '#e8ab70', '#79c4b1'] },
+  { name: 'Sakura', value: { hueShift: 60, saturation: 0.8 }, colors: ['#e879f9', '#60a5fa', '#34d399'] },
   { name: 'Lagoon', value: { hueShift: -35, saturation: 0.75, ring: '#E3F6F0' }, colors: ['#68b8be', '#dc90b8', '#b0c875'] },
 ]
 function preset(value: PaletteOptions) {
