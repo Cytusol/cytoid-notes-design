@@ -162,11 +162,13 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
           : holdBody({ length: (note.end - note.hit) * (height - 70), progress, appear, t: local - note.hit }, dc))
       }
       if (follow) {
-        // the following head is its own sprite: always the drag-head's last frame,
-        // worn in the click family's colours for a click-drag head
+        // the following head is its own sprite: always the drag-head's last frame
+        // at the drag-head's size, worn in the click family's colours for a click-drag head
         const isClickDrag = note.kind === 'click-drag-head'
         const followKind = isClickDrag ? 'drag-head' : note.kind
-        const followCtx = isClickDrag ? { ...dc, palette: palette.family('click', directionFor(note.hit)) } : dc
+        const followCtx = isClickDrag
+          ? { ...createContext(followKind, { palette, direction: directionFor(note.hit), scale, approach: APPROACH, heading }), palette: palette.family('click', directionFor(note.hit)) }
+          : dc
         drawScene(ctx, renderNote(followKind, { phase: 'enter', p: 1 }, followCtx, { judgement: false }))
         ctx.restore()
         // …and the clear/miss burst stays at the trigger point, drawn on top
