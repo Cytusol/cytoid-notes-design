@@ -3,20 +3,20 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, closed]
 
-# Pages production on main, preview deployments on PRs.
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
+# Builds land on the gh-pages branch: production at the root, PR previews under
+# pr-preview/<pr>/ (each PR keeps its own isolated URL).
 concurrency:
   group: playground-${{ github.event_name == 'pull_request' && github.event.number || 'main' }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
+    if: github.event_name == 'push' || github.event.action != 'closed'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # push builds to the gh-pages branch
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -29,33 +29,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck && pnpm test
       - run: pnpm build:playground
-        env:
-          CI: true # switches the vite base to /cytoid-notes-design/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: deploy production (site root)
+        if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: playground/dist
-
-  deploy-production:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-  deploy-preview:
-    if: github.event_name == 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playground/dist
+          publish_branch: gh-pages
+          keep_files: true # preserve pr-preview/ directories
+          commit_message: 'deploy production ${{ github.sha }}'
+      - name: deploy preview (pr-preview/<pr>/)
+        if: github.event_name == 'pull_request'
+        uses: rossjrw/pr-preview-action@v1
+        id: preview
         with:
-          preview: true
+          source-dir: playground/dist
+          umbrella-dir: pr-preview
+          preview-branch: gh-pages
+      - name: post preview link
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview
+          message: |
+            🔮 Playground preview for this PR: **${{ steps.preview.outputs.preview_url }}**
+
+            Production: <https://cytusol.github.io/cytoid-notes-design/>
+            The preview lives under `pr-preview/${{ github.event.number }}/` and updates with every push.
+
+  cleanup-preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # remove the preview directory from gh-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: playground/dist # unused for removal
+          umbrella-dir: pr-preview
+          preview-branch: gh-pages
+          action: remove
