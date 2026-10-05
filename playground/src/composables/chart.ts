@@ -55,17 +55,6 @@ function dragLead(src: ChartNote, dst: ChartNote, t: number) {
   return b <= a ? (t >= b ? 1 : 0) : clamp01((t - a) / (b - a))
 }
 
-/** Indices of a chain: the head and every consecutive child sharing its chain id. */
-function chainOf(index: number): number[] | null {
-  const head = chart[index]!
-  if (!head.chain)
-    return null
-  const nodes = [index]
-  for (let j = index + 1; j < chart.length && chart[j]!.chain === head.chain; j++)
-    nodes.push(j)
-  return nodes.length > 1 ? nodes : null
-}
-
 /**
  * Triggered (hit or missed) drag heads keep following the scan line along their
  * drag connection, drawn with the enter last frame (click-drag heads use click
@@ -73,9 +62,14 @@ function chainOf(index: number): number[] | null {
  * chain is in progress, or null once the scan line has passed the chain's end.
  */
 function chainFollowPosition(index: number, t: number, width: number, height: number) {
-  const nodes = chainOf(index)
-  if (!nodes)
+  const head = chart[index]!
+  // the head only follows *after* its own trigger — never before it (t < head.hit
+  // would clamp α to 0 and pin the steady pose at the head's position forever)
+  if (!head.chain || t < head.hit)
     return null
+  const nodes = [index]
+  for (let j = index + 1; j < chart.length && chart[j]!.chain === head.chain; j++)
+    nodes.push(j)
   const last = chart[nodes.at(-1)!]!
   if (t >= last.hit)
     return null
