@@ -13,6 +13,9 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 - `src/bake/` — Node-only baker (resvg): `index.ts`, `sample.ts` (frame sampling rules, also exported from main entry), `cylheim.ts` (Cylheim file-name/timeline mapping). Exposed as `cytoid-notes-design/bake`.
 - `scripts/bake.ts` — CLI (`pnpm bake`), `scripts/sheet.ts` — contact sheets to `.sheets/` (`pnpm exec tsx scripts/sheet.ts click,hold [up|down]`).
 - `playground/` — Vue 3 + Vite review app; aliases `cytoid-notes-design` to `../src` (never import `src/bake/index.ts` in the browser).
+- `playground/player/` — chart player core (TS, framework-agnostic; will become a standalone package later): `types.ts` (Cytoid chart format), `chart.ts` (parse: tempo/tick↔time, page positions, fade-in, chains), `state.ts` (pure per-frame derivation: note phases, drag segments, chain-follow, scanline), `clock.ts` (ManualClock/AudioClock), `pixi-render.ts` (SceneView: scene graph → Pixi sync adapter), `stage.ts` (Pixi layers + pooled note views + core-styled HUD, all drawn from the design clips), `judgement.ts` (play-mode input judging: tap/hold/drag/cdrag/flick-swipe, windows in `JUDGE_WINDOWS`, `autoplayStats`), `layout.ts` (two-stage geometry: 4:3–22:9 aspect clamp + core `#note-box` insets), `player.ts` (controller: clock + judge + stage), `level.ts` (.cytoidlevel zip / URL loading).
+- `playground/test/` — vitest project for the player core (see root `vitest.config.ts`, two projects: `package` + `playground`).
+- `playground/public/level/` — bundled demo level (夢色パレード — Yunomi, **CC BY-NC-SA 3.0**; attribution shown in the Player view).
 - `docs/DESIGN.md` — design spec (Chinese). `docs/research/references.md` — Cytoid/Cylheim findings.
 
 ## Conventions
@@ -26,4 +29,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 
 ## Commands
 - `pnpm test`, `pnpm typecheck`, `pnpm lint --fix`, `pnpm bake [--cylheim]`, `pnpm dev`, `pnpm build:playground`.
+- Playground typecheck: `pnpm -C playground exec vue-tsc --noEmit` (player/ is only pulled into the program when the Player view imports it).
+- Player conventions: everything on screen is derived per frame from chart time (no schedulers — seek is just re-derivation); judgement works on pure state machines in `judgement.ts`; HUD is system-UI Pixi `Text` styled after the core's `#combo`/`#score`; the judgement font in `src/notes/judgement.ts` also carries digits/`X`/`%`/`.` for UI text.
+- Pixi v8 gotchas learned here: `renderer.width` is already logical px (never divide by resolution), `Graphics extends Container` (don't use instanceof to distinguish), `resizeTo` can miss late layout changes (keep the manual `ResizeObserver`).
 - References: [Cytoid](https://github.com/Cytoid/Cytoid) (public source repo) and the Cylheim project (private research checkout; Cytus II assets: reference only, never copy).
