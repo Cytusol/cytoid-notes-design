@@ -54,6 +54,43 @@ function dragLead(src: ChartNote, dst: ChartNote, t: number) {
   const b = dst.hit - APPROACH - 0.132
   return b <= a ? (t >= b ? 1 : 0) : clamp01((t - a) / (b - a))
 }
+
+/** Indices of a chain: the head and every consecutive child sharing its chain id. */
+function chainOf(index: number): number[] | null {
+  const head = chart[index]!
+  if (!head.chain)
+    return null
+  const nodes = [index]
+  for (let j = index + 1; j < chart.length && chart[j]!.chain === head.chain; j++)
+    nodes.push(j)
+  return nodes.length > 1 ? nodes : null
+}
+
+/**
+ * Triggered (hit or missed) drag heads keep following the scan line along their
+ * drag connection, drawn with the enter last frame (click-drag heads use click
+ * colours — FAMILY_OF already handles that). Returns the head position while the
+ * chain is in progress, or null once the scan line has passed the chain's end.
+ */
+function chainFollowPosition(index: number, t: number, width: number, height: number) {
+  const nodes = chainOf(index)
+  if (!nodes)
+    return null
+  const last = chart[nodes.at(-1)!]!
+  if (t >= last.hit)
+    return null
+  for (let k = 0; k + 1 < nodes.length; k++) {
+    const a = chart[nodes[k]]!
+    const b = chart[nodes[k + 1]]!
+    if (t <= b.hit) {
+      const α = b.hit === a.hit ? 1 : clamp01((t - a.hit) / (b.hit - a.hit))
+      const pa = notePosition(a, width, height)
+      const pb = notePosition(b, width, height)
+      return { x: pa.x + (pb.x - pa.x) * α, y: pa.y + (pb.y - pa.y) * α }
+    }
+  }
+  return null
+}
 function stateAt(note: ChartNote, t: number, grade: Grade): NoteState | null {
   if (t < note.hit - APPROACH)
     return null
@@ -104,27 +141,31 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
     chart.forEach((note, i) => {
       const grade = gradeFor(i, mix)
       const state = stateAt(note, local, grade)
-      if (!state)
+      // triggered/missed drag heads keep following the scan line after their burst
+      const follow = !state && (note.kind === 'drag-head' || note.kind === 'click-drag-head')
+        ? chainFollowPosition(i, local, width, height)
+        : null
+      if (!state && !follow)
         return
-      const pos = notePosition(note, width, height)
+      const pos = follow ?? notePosition(note, width, height)
       // drag-head arrows point at the next node of their chain
       const next = chart[i + 1]
       const target = note.chain && next?.chain === note.chain ? notePosition(next, width, height) : null
       const heading = target ? Math.atan2(target.x - pos.x, -(target.y - pos.y)) : 0
       const dc = createContext(note.kind, { palette, direction: directionFor(note.hit), scale, approach: APPROACH, heading })
       // Drops approach from the origin side of this page's scanner and meet it at hit time.
-      if (note.kind.startsWith('drop-') && state.phase === 'enter')
+      if (note.kind.startsWith('drop-') && state?.phase === 'enter')
         pos.y += (dc.direction === 'up' ? 1 : -1) * (note.hit - local) * (height - 70) * 0.65
       ctx.save()
       ctx.translate(pos.x, pos.y)
-      if (note.end && (state.phase === 'enter' || state.phase === 'holding')) {
+      if (note.end && state && (state.phase === 'enter' || state.phase === 'holding')) {
         const progress = state.phase === 'holding' ? state.progress : 0
         const appear = state.phase === 'enter' ? state.p : 1
         drawScene(ctx, note.kind === 'long-hold'
           ? longHoldBody({ top: pos.y - 35, bottom: height - 35 - pos.y, progress, appear }, dc)
           : holdBody({ length: (note.end - note.hit) * (height - 70), progress, appear, t: local - note.hit }, dc))
       }
-      drawScene(ctx, renderNote(note.kind, state, dc, { judgement }))
+      drawScene(ctx, renderNote(note.kind, state ?? { phase: 'enter', p: 1 }, dc, { judgement }))
       ctx.restore()
     })
   }
