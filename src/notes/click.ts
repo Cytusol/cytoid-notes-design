@@ -13,9 +13,10 @@
  *             colours: core depth 2 → 3, background depth 2 → 1 (ease-in-out),
  *             with the lightness steps compressed (see DEPTH_CONTRAST)
  *  0.68–1.00  approach ring contracts *linearly in time* from 1.9 R onto the ring
- *             (thin, ≤ 50 % opacity — a peripheral cue, not a decoration)
- *  0.92–1.00  blink: core flashes white and the ring thickens, settling exactly
- *             at p = 1 (the hit pose is calm and full)
+ *             (thin, ≤ 25 % opacity — a peripheral cue, not a decoration)
+ *  0.86–1.00  double blink: a lead-in flash (0.86–0.89) then the final blink (0.92–1);
+ *             the core flashes white and the ring thickens, settling exactly at p = 1
+ *             (the hit pose is calm and full)
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
@@ -35,7 +36,18 @@ export function ringWidth(ctx: DrawContext) {
 export const CORE_MAX = 0.8
 
 /** Phase boundaries (normalised). */
-export const CLICK_TIMING = { approachFrom: 0.68, coreFull: 0.94, blinkFrom: 0.92 }
+export const CLICK_TIMING = { approachFrom: 0.68, coreFull: 0.94, blinkFrom: 0.92, readyBlinkFrom: 0.86 }
+
+/**
+ * Core blink envelope: a lead-in blink (0.86–0.89) + the final one (0.92–1) — a double
+ *  flash right before the hit.
+ */
+export function blinkAmount(p: number): number {
+  return Math.max(
+    bump(p, CLICK_TIMING.readyBlinkFrom, CLICK_TIMING.blinkFrom),
+    bump(p, CLICK_TIMING.blinkFrom, 1),
+  )
+}
 
 /**
  * Depth 1-2-3 colour progression: 1 = track (darkest), 2 = deep, 3 = fill
@@ -84,7 +96,7 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const g = outCubic(seg(p, 0, CLICK_TIMING.coreFull))
   // the core stops at 0.8·inner: a rim of the note colour stays visible at the hit (hue identity)
   const coreR = inner * CORE_MAX * lerp(0.16, 1, g) * seg(p, 0, 0.12)
-  const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
+  const blink = blinkAmount(p)
   const depth = depthColors(p, ctx)
 
   // approach ring: linear in time so its speed is readable; hairline-thick

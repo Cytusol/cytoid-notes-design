@@ -3,16 +3,16 @@
  *
  * Enter:
  *  0.00–0.45  diamond outline draws itself (4 edges grow from the vertices), scale 0.6 → 1
- *  0.00–0.94  fill diamond grows ease-out (settles early, as Click), 0.92–1 blink
+ *  0.00–0.94  fill diamond grows ease-out (settles early, as Click), 0.86–0.89 + 0.92–1 double blink
  *  0.00–0.45  chevrons slide in ease-out and settle; no lock/kick — the note carries
  *             no timing cues, the scan line does
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { bump, lerp, outCubic, outQuart, seg } from '../core/ease'
+import { lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { tokens } from '../tokens'
-import { CLICK_TIMING, CORE_MAX, depthColors } from './click'
+import { blinkAmount, CLICK_TIMING, CORE_MAX, depthColors } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { diamond, flickChevron } from './parts'
 
@@ -65,7 +65,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
 
   // same timing language as Click: ease-out core from p = 0, settled before the hit
   const g = lerp(0.16, 1, outCubic(seg(p, 0, CLICK_TIMING.coreFull))) * seg(p, 0, 0.12)
-  const blink = bump(p, CLICK_TIMING.blinkFrom, 1)
+  const blink = blinkAmount(p)
   const depth = depthColors(p, ctx)
   const body = group([
     diamond(inner + W * 0.15, { fill: depth.base }),
@@ -86,7 +86,7 @@ export const flick: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: flickEnter,
-    note: 'Diamond outline grows from edge midpoints, core grows ease-out and settles early (as Click), chevrons slide in ease-out and settle by p = 0.45.',
+    note: 'Diamond outline grows from edge midpoints, core grows ease-out and settles early with a double blink (as Click), chevrons slide in ease-out and settle by p = 0.45.',
   },
   clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),
