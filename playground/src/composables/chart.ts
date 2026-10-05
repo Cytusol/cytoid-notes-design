@@ -135,13 +135,15 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
     chart.forEach((note, i) => {
       const grade = gradeFor(i, mix)
       const state = stateAt(note, local, grade)
-      // triggered/missed drag heads keep following the scan line after their burst
-      const follow = !state && (note.kind === 'drag-head' || note.kind === 'click-drag-head')
+      // triggered/missed drag heads keep following the scan line along their chain,
+      // starting the instant they are judged — the burst plays on top, at the trigger point
+      const follow = (note.kind === 'drag-head' || note.kind === 'click-drag-head')
         ? chainFollowPosition(i, local, width, height)
         : null
       if (!state && !follow)
         return
-      const pos = follow ?? notePosition(note, width, height)
+      const trigger = notePosition(note, width, height)
+      const pos = follow ?? trigger
       // drag-head arrows point at the next node of their chain
       const next = chart[i + 1]
       const target = note.chain && next?.chain === note.chain ? notePosition(next, width, height) : null
@@ -159,7 +161,20 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
           ? longHoldBody({ top: pos.y - 35, bottom: height - 35 - pos.y, progress, appear }, dc)
           : holdBody({ length: (note.end - note.hit) * (height - 70), progress, appear, t: local - note.hit }, dc))
       }
-      drawScene(ctx, renderNote(note.kind, state ?? { phase: 'enter', p: 1 }, dc, { judgement }))
+      if (follow) {
+        // the following head: steady last frame at the moving position (no text)…
+        drawScene(ctx, renderNote(note.kind, { phase: 'enter', p: 1 }, dc, { judgement: false }))
+        ctx.restore()
+        // …and the clear/miss burst stays at the trigger point, drawn on top
+        if (state) {
+          ctx.save()
+          ctx.translate(trigger.x, trigger.y)
+          drawScene(ctx, renderNote(note.kind, state, dc, { judgement }))
+          ctx.restore()
+        }
+        return
+      }
+      drawScene(ctx, renderNote(note.kind, state!, dc, { judgement }))
       ctx.restore()
     })
   }
