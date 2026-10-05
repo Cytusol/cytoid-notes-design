@@ -74,7 +74,7 @@ export function depthColors(p: number, ctx: DrawContext) {
   const k = inOutQuad(seg(p, 0.1, CLICK_TIMING.coreFull))
   const deep = stepToward(ctx.palette.fill, ctx.palette.deep, DEPTH_CONTRAST)
   const track = stepToward(ctx.palette.fill, ctx.palette.track, DEPTH_CONTRAST)
-  return { base: mix(deep, track, k), core: mix(deep, ctx.palette.fill, k) }
+  return { base: mix(deep, track, k), core: mix(deep, ctx.palette.fill, k), k }
 }
 
 export interface ClickOptions {
@@ -109,7 +109,9 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const body = group([
     // solid ball from the first frame; depth 2 → core rises to 3, background sinks to 1
     disk(inner + 0.5, depth.base),
-    disk(coreR, depth.core),
+    // the core fades in with the depth split — while it is still the base colour a
+    // stacked translucent copy reads as a bright dot during the entry fade
+    disk(coreR, depth.core, depth.k),
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
     assemblingRing(R - W / 2, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, 3, build, lerp(-TAU / 6, 0, build)),
