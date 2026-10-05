@@ -3,8 +3,8 @@
  *
  * Typeface: a custom monoline, chamfered (45°) geometric capital set drawn
  * with the same polyline primitives as the notes — no font files, identical
- * in Canvas, SVG/resvg bakes and a Unity port. Only the 14 letters needed are
- * defined.
+ * in Canvas, SVG/resvg bakes and a Unity port. The 14 judgement letters plus
+ * digits and '%' (combo / score UI) are defined.
  *
  * Motion (u = t / duration, duration = the grade's clear duration):
  *  0.00–0.40  tracking closes in (1.0 H → 0.32 H letter gap)
@@ -34,20 +34,34 @@ const M = 0.82
 
 /** Glyphs in a 1-unit-high box, y down. */
 const GLYPHS: Record<string, Glyph> = {
-  P: { w: W, strokes: [[[0, 1], [0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]]] },
-  E: { w: W, strokes: [[[W, 0], [0, 0], [0, 1], [W, 1]], [[0, 0.5], [W * 0.82, 0.5]]] },
-  R: { w: W, strokes: [[[0, 1], [0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]], [[W * 0.42, 0.5], [W, 1]]] },
-  F: { w: W, strokes: [[[W, 0], [0, 0], [0, 1]], [[0, 0.5], [W * 0.82, 0.5]]] },
-  C: { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 1 - K], [K, 1], [W, 1]]] },
-  T: { w: W, strokes: [[[0, 0], [W, 0]], [[W / 2, 0], [W / 2, 1]]] },
-  G: { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 1 - K], [K, 1], [W, 1], [W, 0.55], [W * 0.48, 0.55]]] },
-  A: { w: W, strokes: [[[0, 1], [0, K], [K, 0], [W - K, 0], [W, K], [W, 1]], [[0, 0.58], [W, 0.58]]] },
-  O: { w: W, strokes: [[[K, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [K, 1], [0, 1 - K], [0, K]]], closed: [true] },
-  D: { w: W, strokes: [[[0, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [0, 1]]], closed: [true] },
-  B: { w: W, strokes: [[[0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]], [[W - K, 0.5], [W, 0.5 + K], [W, 1 - K], [W - K, 1], [0, 1], [0, 0]]] },
-  M: { w: M, strokes: [[[0, 1], [0, 0], [M / 2, 0.55], [M, 0], [M, 1]]] },
-  I: { w: 0, strokes: [[[0, 0], [0, 1]]] },
-  S: { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 0.5 - K], [K, 0.5], [W - K, 0.5], [W, 0.5 + K], [W, 1 - K], [W - K, 1], [0, 1]]] },
+  'P': { w: W, strokes: [[[0, 1], [0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]]] },
+  'E': { w: W, strokes: [[[W, 0], [0, 0], [0, 1], [W, 1]], [[0, 0.5], [W * 0.82, 0.5]]] },
+  'R': { w: W, strokes: [[[0, 1], [0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]], [[W * 0.42, 0.5], [W, 1]]] },
+  'F': { w: W, strokes: [[[W, 0], [0, 0], [0, 1]], [[0, 0.5], [W * 0.82, 0.5]]] },
+  'C': { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 1 - K], [K, 1], [W, 1]]] },
+  'T': { w: W, strokes: [[[0, 0], [W, 0]], [[W / 2, 0], [W / 2, 1]]] },
+  'G': { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 1 - K], [K, 1], [W, 1], [W, 0.55], [W * 0.48, 0.55]]] },
+  'A': { w: W, strokes: [[[0, 1], [0, K], [K, 0], [W - K, 0], [W, K], [W, 1]], [[0, 0.58], [W, 0.58]]] },
+  'O': { w: W, strokes: [[[K, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [K, 1], [0, 1 - K], [0, K]]], closed: [true] },
+  'D': { w: W, strokes: [[[0, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [0, 1]]], closed: [true] },
+  'B': { w: W, strokes: [[[0, 0], [W - K, 0], [W, K], [W, 0.5 - K], [W - K, 0.5], [0, 0.5]], [[W - K, 0.5], [W, 0.5 + K], [W, 1 - K], [W - K, 1], [0, 1], [0, 0]]] },
+  'M': { w: M, strokes: [[[0, 1], [0, 0], [M / 2, 0.55], [M, 0], [M, 1]]] },
+  'I': { w: 0, strokes: [[[0, 0], [0, 1]]] },
+  'S': { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 0.5 - K], [K, 0.5], [W - K, 0.5], [W, 0.5 + K], [W, 1 - K], [W - K, 1], [0, 1]]] },
+  'X': { w: W * 0.9, strokes: [[[0, 0], [W * 0.9, 1]], [[W * 0.9, 0], [0, 1]]] },
+  // digits — same chamfered stroke language as the letters (combo / score UI)
+  '0': { w: W, strokes: [[[K, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [K, 1], [0, 1 - K], [0, K]]], closed: [true] },
+  '1': { w: 0.34, strokes: [[[0, 0.16], [0.17, 0], [0.17, 1]]] },
+  '2': { w: W, strokes: [[[0, K], [K, 0], [W - K, 0], [W, K], [W, 0.42], [0.08, 1], [W, 1]]] },
+  '3': { w: W, strokes: [[[0, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [K, 1], [0, 1 - K]], [[0, 0.5], [W * 0.75, 0.5]]] },
+  '4': { w: W, strokes: [[[W * 0.68, 0], [0, 0.62], [W, 0.62]], [[W * 0.68, 0], [W * 0.68, 1]]] },
+  '5': { w: W, strokes: [[[W, 0], [K, 0], [0, K], [0, 0.5 - K], [K, 0.5], [W - K, 0.5], [W, 0.5 + K], [W, 1 - K], [W - K, 1], [0, 1]]] },
+  '6': { w: W, strokes: [[[W, K], [W - K, 0], [K, 0], [0, K], [0, 1 - K], [K, 1], [W - K, 1], [W, 1 - K], [W, 0.5 + K], [W - K, 0.5], [0.06, 0.5]]] },
+  '7': { w: W, strokes: [[[0, 0], [W, 0], [W * 0.38, 1]]] },
+  '8': { w: W, strokes: [[[K, 0], [W - K, 0], [W, K], [W, 1 - K], [W - K, 1], [K, 1], [0, 1 - K], [0, K]], [[0, 0.5], [W, 0.5]]], closed: [true, false] },
+  '9': { w: W, strokes: [[[0, 1 - K], [K, 1], [W - K, 1], [W, 1 - K], [W, K], [W - K, 0], [K, 0], [0, K], [0, 0.5 - K], [K, 0.5], [W - 0.06, 0.5]]] },
+  '%': { w: 0.78, strokes: [[[0.72, 0], [0.06, 1]], [[0.02, 0.06], [0.3, 0.06], [0.3, 0.34], [0.02, 0.34]], [[0.48, 0.66], [0.76, 0.66], [0.76, 0.94], [0.48, 0.94]]], closed: [false, true, true] },
+  '.': { w: 0.26, strokes: [[[0.05, 0.9], [0.21, 0.9], [0.21, 1], [0.05, 1]]], closed: [true] },
 }
 
 export const JUDGEMENT_TEXT: Record<Grade, string> = {
@@ -60,6 +74,13 @@ export const JUDGEMENT_TEXT: Record<Grade, string> = {
 
 /** Cap height in px for a context (reduced from the original 0.17 — smaller text glares less). */
 export const judgementCapHeight = (ctx: DrawContext) => ctx.unit * 0.12
+
+/** Width of a rendered string in px (same metrics as `drawText`). Unknown glyphs are skipped. */
+export function measureText(text: string, H: number, gap?: number): number {
+  const g = gap ?? H * 0.32
+  const glyphs = [...text].map(ch => GLYPHS[ch]!).filter(Boolean)
+  return glyphs.reduce((a, gl) => a + gl.w * H, 0) + g * Math.max(0, glyphs.length - 1)
+}
 
 /** Where the text centre sits relative to the note centre: the centre of the effect. */
 export function judgementOffset(_ctx: DrawContext): { x: number, y: number } {

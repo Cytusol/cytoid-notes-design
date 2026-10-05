@@ -6,13 +6,15 @@ import FramesView from './views/FramesView.vue'
 import GalleryView from './views/GalleryView.vue'
 import InspectorView from './views/InspectorView.vue'
 import PaletteView from './views/PaletteView.vue'
+import PlayerView from './views/PlayerView.vue'
 
 const tabs = [
   { id: 'gallery', label: 'Gallery', number: '01', title: 'The complete note vocabulary.', description: 'Ten note kinds. Every phase. A space to look closely at the details.', view: GalleryView },
   { id: 'inspector', label: 'Inspector', number: '02', title: 'A closer look at every frame.', description: 'Scrub, step, compare directions, and inspect the geometry of each clip.', view: InspectorView },
   { id: 'chart', label: 'Chart preview', number: '03', title: 'See the designs in motion.', description: 'A looping autoplay chart for reviewing readability, timing, and connections.', view: ChartView },
-  { id: 'frames', label: 'Frames', number: '04', title: 'From vectors to delivery.', description: 'Compare the baked sprite library with its live vector counterpart.', view: FramesView },
-  { id: 'palette', label: 'Palette', number: '05', title: 'Find your own colour language.', description: 'Tune perceptual hues or bring your Cytoid custom colours. Every preview follows.', view: PaletteView },
+  { id: 'player', label: 'Player', number: '04', title: 'Play real levels with the live renderer.', description: 'Load a .cytoidlevel and watch the vector designs drive an actual chart, no baked sprites.', view: PlayerView },
+  { id: 'frames', label: 'Frames', number: '05', title: 'From vectors to delivery.', description: 'Compare the baked sprite library with its live vector counterpart.', view: FramesView },
+  { id: 'palette', label: 'Palette', number: '06', title: 'Find your own colour language.', description: 'Tune perceptual hues or bring your Cytoid custom colours. Every preview follows.', view: PaletteView },
 ] as const
 function currentHash() {
   return tabs.some(t => t.id === location.hash.slice(1)) ? location.hash.slice(1) : 'gallery'
@@ -41,7 +43,7 @@ watch(active, (id) => {
     <main>
       <div class="page-heading">
         <div><span class="eyebrow">DESIGN REVIEW / {{ selected.label.toUpperCase() }}</span><h1>{{ selected.title }}</h1><p>{{ selected.description }}</p></div><div class="page-mark mono">
-          {{ selected.number }}<span>/ 05</span>
+          {{ selected.number }}<span>/ 06</span>
         </div>
       </div><component :is="selected.view" />
     </main>
