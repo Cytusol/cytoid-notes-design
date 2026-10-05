@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # push builds to the gh-pages branch
+      pull-requests: write # post/update the preview-link comment
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
