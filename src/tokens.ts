@@ -47,15 +47,17 @@ export const tokens = {
   unit: 128,
 
   /**
-   * Relative outer size per kind. Drag head / child are a measured compromise between
-   *  Cytoid's *visible* sizes (0.675 / 0.274 — transform ratios × sprite insets) and
-   *  Cytus II's (≈0.99 / ≈0.49, Cylheim nostalgic skin); head : child ≈ 2 : 1 in both.
+   * Relative outer size per kind. Drag head / child are measured from *visible* note
+   * bodies, not transform ratios: Cytoid renders them at 0.675 / 0.274 (transform
+   * 0.8 / 0.65 × sprite insets and child scales), Cytus II at ≈0.99 / ≈0.49 (Cylheim
+   * nostalgic skin). We use Cytoid's exact head size and a compromise child —
+   * head : child ≈ 1.8 : 1 (references: 2.5 / 2.0).
    */
   size: {
     'click': 1,
     'hold': 1,
     'long-hold': 1,
-    'drag-head': 0.75,
+    'drag-head': 0.675,
     'drag-child': 0.375,
     'flick': 1.125,
     'click-drag-head': 1,

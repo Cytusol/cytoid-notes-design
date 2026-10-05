@@ -25,7 +25,7 @@
 ## 2. 坐标与尺寸
 
 - 设计单位 `unit = 128px`，即 Click 的外径。图元坐标以 note 中心为原点，+y 朝下；角度 0 指向 12 点方向，顺时针为正。
-- 各类型相对 Click 的尺寸：Drag head 0.75、Drag child 0.375、Flick 1.125、Drop drag 0.8，其余为 1。Click drag head 与 Click 相同。Drag head / child 不再沿用 Cytoid 变换比例（0.8 / 0.65）：按可见主体实测，Cytoid 实际是 0.675 / 0.274（sprite 留白 + 子物体缩放），Cytus II 是 0.99 / 0.49，两者头：子都在 2–2.5:1；0.75 / 0.375 取二者折中，保持同样的层级关系。
+- 各类型相对 Click 的尺寸：Drag head 0.675（= Cytoid 可见实测值）、Drag child 0.375、Flick 1.125、Drop drag 0.8，其余为 1。Click drag head 与 Click 相同。Drag head / child 不再沿用 Cytoid 变换比例（0.8 / 0.65）：按可见主体实测，Cytoid 实际是 0.675 / 0.274（sprite 留白 + 子物体缩放），Cytus II 是 0.99 / 0.49，两者头：子都在 2–2.5:1；head 0.675 取 Cytoid 可见实测值，child 0.375 为折中，头:子 ≈ 1.8:1。
 - 描边与宽度（单位 u）：
   - 主环 0.085u，细线 0.022u；
   - **Hold 身体（进度条）宽 0.284u**，Long hold 相同，取自 Cytoid HoldLine；
