@@ -1,8 +1,8 @@
 # Reference notes (research digest)
 
-Condensed findings that the design is built on. Source repos are local checkouts.
+Condensed findings that the design is built on.
 
-## Cytoid (current vector renderer) — `/Users/teages/Documents/GitHub/Cytoid`
+## Cytoid (current vector renderer) — [Cytoid/Cytoid](https://github.com/Cytoid/Cytoid)
 
 - Renderers: `Assets/Scripts/Game/Notes/Classic/Classic*NoteRenderer.cs`, `Assets/Scripts/Game/Notes/Drop/*`.
 - Composition: every classic note = `NoteRing` (white outline) + `NoteFill` (coloured disc).
@@ -22,7 +22,7 @@ Condensed findings that the design is built on. Source repos are local checkouts
   Clear effect = FlatFX ring (24 sectors, 4 for flick), thickness 1.333 → 0.333, lifetime `0.4 / speed`
   with speed 1 / 0.9 / 0.7 / 0.5 / 0.3 for P / Gr / Go / B / M.
 
-## Cylheim (Cytus II assets, reference only) — `/Users/teages/Documents/GitHub/Cylheim-Electron`
+## Cylheim (Cytus II assets, reference only) — private research checkout
 
 - Assets: individual RGBA PNG frames in `src/images/designer/`, no atlas. Name pattern
   `Note-<Kind>-<Phase>-Textures-<Name>_<00000>.png` (5-digit, zero padded).

@@ -26,4 +26,4 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 
 ## Commands
 - `pnpm test`, `pnpm typecheck`, `pnpm lint --fix`, `pnpm bake [--cylheim]`, `pnpm dev`, `pnpm build:playground`.
-- References: Cytoid repo `/Users/teages/Documents/GitHub/Cytoid`, Cylheim `/Users/teages/Documents/GitHub/Cylheim-Electron` (Cytus II assets: reference only, never copy).
+- References: [Cytoid](https://github.com/Cytoid/Cytoid) (public source repo) and the Cylheim project (private research checkout; Cytus II assets: reference only, never copy).
