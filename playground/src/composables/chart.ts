@@ -132,7 +132,10 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
         ctx.restore()
       }
     })
-    chart.forEach((note, i) => {
+    // Later notes render *below* earlier ones (Cytoid: sortingOrder = (count − id) × 3),
+    // so a note sliding in never covers the notes already on screen
+    for (let i = chart.length - 1; i >= 0; i--) {
+      const note = chart[i]!
       const grade = gradeFor(i, mix)
       const state = stateAt(note, local, grade)
       // triggered/missed drag heads keep following the scan line along their chain,
@@ -141,7 +144,7 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
         ? chainFollowPosition(i, local, width, height)
         : null
       if (!state && !follow)
-        return
+        continue
       const trigger = notePosition(note, width, height)
       const pos = follow ?? trigger
       // drag-head arrows point at the next node of their chain
@@ -178,11 +181,11 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
           drawScene(ctx, renderNote(note.kind, state, dc, { judgement }))
           ctx.restore()
         }
-        return
+        continue
       }
       drawScene(ctx, renderNote(note.kind, state!, dc, { judgement }))
       ctx.restore()
-    })
+    }
   }
   ctx.save()
   ctx.globalAlpha = 1
