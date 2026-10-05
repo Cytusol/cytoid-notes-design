@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Flat-style note designs for Cytoid: vector animation specs + baked frame animations",
   "license": "MIT",
-  "repository": "Teages/cytoid-notes-design",
+  "repository": "github:Cytusol/cytoid-notes-design",
   "sideEffects": false,
   "devEngines": {
     "packageManager": {
