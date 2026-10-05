@@ -17,7 +17,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { inOutCubic, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { inCubic, inOutCubic, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 import { ringWidth } from './click'
@@ -137,17 +137,28 @@ function holdLoop(long: boolean) {
   }
 }
 
-function holdProgress(_long: boolean) {
+/**
+ * Long hold only: during the final stretch of the hold the progress ring thins to
+ *  `PROGRESS_SHRINK_CORE`× width (Cytus II LongHold_Line collapse, progress-keyed),
+ *  eased in — slow start, fast close. Swap `PROGRESS_SHRINK_EASE` to try other curves.
+ */
+const PROGRESS_SHRINK_FROM = 0.86
+const PROGRESS_SHRINK_CORE = 0.15
+const PROGRESS_SHRINK_EASE = inCubic
+
+function holdProgress(long: boolean) {
   return (p: number, ctx: DrawContext): SceneNode => {
     const R = ctx.size / 2
     const W = ctx.unit * 0.083
     const r = R * PROGRESS_R
+    const shrink = long ? PROGRESS_SHRINK_EASE(seg(p, PROGRESS_SHRINK_FROM, 1)) : 0
+    const w = W * (1 - (1 - PROGRESS_SHRINK_CORE) * shrink)
     const lead = Math.min(1, p * 4 / 3)
     const done = Math.min(1, p)
     return group([
-      ring(r, W, ctx.palette.track, 0.9),
-      lead > 0 ? arc(r, 0, TAU * lead, W, ctx.palette.ring) : null,
-      done > 0 ? arc(r, 0, TAU * done, W, ctx.palette.fill) : null,
+      ring(r, w, ctx.palette.track, 0.9),
+      lead > 0 ? arc(r, 0, TAU * lead, w, ctx.palette.ring) : null,
+      done > 0 ? arc(r, 0, TAU * done, w, ctx.palette.fill) : null,
     ].filter(Boolean) as SceneNode[])
   }
 }
