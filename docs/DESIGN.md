@@ -116,7 +116,7 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.1 淡
   - 金色；
   - 中心图形是 **方框**，边长按视觉面积与圆圈匹配（半边长 = 0.82 × 圆圈半径）；
   - 四角括号在 0.1–0.45 从 1.6R 收拢到 1.28R。
-- **身体** `longHoldBody`：竖贯整个游玩区域，宽度与 Hold 相同。已完成部分从 note 向上下两端同时延伸。**末段坍缩**：progress 0.86→1.0 时整根柱子（暗轨 + 双轨 + 完成段）从左右向内收窄到 15% 宽（对应 Cytus II LongHold_Line 末段坍缩，按进度归一化驱动，时长越长收得越慢），缓动先慢后快（`LONG_HOLD_SHRINK_EASE`，现为 inCubic）。
+- **身体** `longHoldBody`：竖贯整个游玩区域，宽度与 Hold 相同。已完成部分从 note 向上下两端同时延伸。**末段坍缩**：progress 0.86→1.0 时整根柱子（暗轨 + 双轨 + 完成段）从左右向内收窄到 15% 宽（对应 Cytus II LongHold_Line 末段坍缩，按进度归一化驱动，时长越长收得越慢），缓动先快后慢（`LONG_HOLD_SHRINK_EASE`，现为 outCubic）。
 - **clear**：增加一道竖直光束，向上下延伸约 3R 后收窄淡出。
 
 ### Drag 系列（Drag head / Drag child / Click drag child）

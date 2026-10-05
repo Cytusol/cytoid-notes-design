@@ -5,7 +5,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext } from './types'
-import { clamp01, inCubic, lerp, outCubic, seg } from '../core/ease'
+import { clamp01, lerp, outCubic, seg } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 
@@ -77,7 +77,7 @@ export interface LongHoldBodyOptions {
  */
 const LONG_HOLD_SHRINK_FROM = 0.86
 const LONG_HOLD_SHRINK_CORE = 0.15
-const LONG_HOLD_SHRINK_EASE = inCubic
+const LONG_HOLD_SHRINK_EASE = outCubic
 
 export function longHoldBody(o: LongHoldBodyOptions, ctx: DrawContext): SceneNode {
   const WbFull = ctx.unit * tokens.stroke.holdBody
