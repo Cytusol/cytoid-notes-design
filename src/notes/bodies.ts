@@ -5,7 +5,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext } from './types'
-import { clamp01, lerp, outCubic, seg } from '../core/ease'
+import { clamp01, inCubic, lerp, outCubic, seg } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
 
@@ -67,15 +67,28 @@ export interface LongHoldBodyOptions {
   appear?: number
 }
 
-/** Long hold body: full-height rail through the note, fills toward both edges. */
+/**
+ * Long hold body: full-height rail through the note, fills toward both edges.
+ *
+ * Final-stage collapse (Cytus II LongHold_Line): during the last stretch of the
+ * hold the whole pillar — track, rails and done fill — narrows from left and
+ * right toward its centre, eased in, down to `LONG_HOLD_SHRINK_CORE`× width.
+ * Progress-keyed (not wall-time), so the collapse speed scales with hold length.
+ */
+const LONG_HOLD_SHRINK_FROM = 0.86
+const LONG_HOLD_SHRINK_CORE = 0.15
+const LONG_HOLD_SHRINK_EASE = inCubic
+
 export function longHoldBody(o: LongHoldBodyOptions, ctx: DrawContext): SceneNode {
-  const Wb = ctx.unit * tokens.stroke.holdBody
+  const WbFull = ctx.unit * tokens.stroke.holdBody
   const hair = ctx.unit * tokens.stroke.hair
   const appear = clamp01(o.appear ?? 1)
   const a = outCubic(seg(appear, 0.3, 0.9))
   const top = o.top * a
   const bottom = o.bottom * a
   const p = clamp01(o.progress)
+  const shrink = LONG_HOLD_SHRINK_EASE(seg(p, LONG_HOLD_SHRINK_FROM, 1))
+  const Wb = WbFull * (1 - (1 - LONG_HOLD_SHRINK_CORE) * shrink)
   const rail = (x: number): SceneNode => ({ type: 'line', x1: x, y1: -top, x2: x, y2: bottom, stroke: ctx.palette.fill, strokeWidth: hair * 1.6, opacity: 0.9 })
   const items: SceneNode[] = [
     { type: 'rect', x: -Wb / 2, y: -top, w: Wb, h: top + bottom, fill: ctx.palette.track, opacity: 0.55 },
