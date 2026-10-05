@@ -116,26 +116,25 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
     const local = time - (cycle + offset) * chartLength
     if (cycle + offset < 0)
       continue
-    // Connections beneath heads, growing toward the destination and retracting after the source hit.
-    chart.forEach((note, i) => {
-      const next = chart[i + 1]
-      if (!note.chain || next?.chain !== note.chain)
-        return
-      const a = notePosition(note, width, height)
-      const b = notePosition(next, width, height)
-      // the whole chain takes the child's colour family (click-drag chains stay distinguishable)
-      const dc = createContext(next.kind, { palette, direction: directionFor(note.hit), scale })
-      const node = dragLine({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, lead: dragLead(note, next, local), trail: clamp01((local - note.hit) / (next.hit - note.hit)) }, dc)
-      if (node) {
-        ctx.save()
-        drawScene(ctx, node)
-        ctx.restore()
-      }
-    })
     // Later notes render *below* earlier ones (Cytoid: sortingOrder = (count − id) × 3),
-    // so a note sliding in never covers the notes already on screen
+    // so a note sliding in never covers the notes already on screen.
+    // Each drag-line segment lives in its destination note's layer — above everything
+    // earlier, below the note it leads into.
     for (let i = chart.length - 1; i >= 0; i--) {
       const note = chart[i]!
+      const prev = chart[i - 1]
+      if (note.chain && prev && prev.chain === note.chain) {
+        // the incoming drag-line segment: growing toward the destination, retracting after the source hit
+        const dc = createContext(note.kind, { palette, direction: directionFor(prev.hit), scale })
+        const a = notePosition(prev, width, height)
+        const b = notePosition(note, width, height)
+        const node = dragLine({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, lead: dragLead(prev, note, local), trail: clamp01((local - prev.hit) / (note.hit - prev.hit)) }, dc)
+        if (node) {
+          ctx.save()
+          drawScene(ctx, node)
+          ctx.restore()
+        }
+      }
       const grade = gradeFor(i, mix)
       const state = stateAt(note, local, grade)
       // triggered/missed drag heads keep following the scan line along their chain,
