@@ -124,6 +124,7 @@ p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.1 淡
 - **Drag head**：白环、满填充，加上沿链方向的 **白色箭头**（Cytoid CDragFill 形状）。
   - 箭头角度由 `createContext(..., { heading })` 指定，0 表示向上，顺时针为正。
   - 帧动画按箭头朝上烘焙，使用时整体旋转 sprite；圆形本体是旋转对称的，旋转不影响外观。
+  - **触发后（hit 或 miss）**：head 跟随扫描线沿连线移动，此时贴图用 drag head 入场的**最后一帧**（稳态姿态，与触发时外观一致）；若是 click drag head，则用同一末帧 + Click 族配色。
 - **Drag child**：与 Cytoid 一样是 **纯色圆**。唯一的内部装饰是 0.62R 处一道低对比度的 deep 细环，不会吸引视线，也不影响判断节点位置。
 - **Click drag child**：与 Drag child 完全相同，只是颜色跟随 Click。
 - **连线** `dragLine`：**不改动 Cytoid 原设计**。
