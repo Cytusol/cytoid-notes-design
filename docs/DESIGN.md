@@ -1,202 +1,201 @@
-# Cytoid Notes — 扁平化设计规范
+# Cytoid Notes — Flat Design Specification
 
-> 代码即规范：`src/notes/*.ts` 是唯一的事实来源，本文解释意图与接入方式。数值以 `src/tokens.ts` 为准。
+> The code is the spec: `src/notes/*.ts` is the single source of truth; this document explains intent and integration. For numbers, see `src/tokens.ts`.
 
-## 1. 设计原则
+## 1. Design Principles
 
-1. **纯扁平**：只用纯色填充和描边。不用渐变、发光、噪点或纹理，只有少量透明度变化。
-   所有动画都由几何图元（圆、弧、矩形、多边形、线段）的位移、缩放、描边宽度和透明度构成。
-2. **保留 Cytoid 的识别度**：圆形 note、白色外环、双环 Hold、菱形 Flick、带箭头的 Drag head、纯色圆的 Drag child、静态胶囊 Drop、白色虚线 Drag 连线，以及按扫描方向区分的配色都保持不变；尺寸以可见主体实测为准（见 §2），不再盲从 Cytoid 变换比例。
-3. **只在需要时给出时间线索**：
-   - Click 和 Flick 需要读点击时刻。时间反馈参考 Cytus II 的结构：先平静地预备，最后加速收尾，并在判定前闪一下。线性增长只能告诉玩家“还早”，加速、收拢和闪烁才能告诉玩家“就是现在”。
-   - Hold 允许提前按下，Drag 系列只需要跟随路径。它们会尽快进入稳态，之后保持静止，不提供时间读数。
-4. **外部提示要克制**：note 外部的装饰（锁定刻度、括号）只作为周边提示，透明度低、位移小，不干扰整张谱面的阅读。
-5. **不只靠颜色区分**：每种 note 都有独立的形状特征，色弱玩家只看形状也能分辨：
-   - Click：彩色实心球，里面的核心逐渐长大，颜色按 1-2-3 深度变化；
-   - Hold：外环加无边框的暗色核心，以及静止的中心圆圈；
-   - Long hold：外环加无边框的暗色核心，以及静止的中心方框，外加四角括号；
-   - Drag head 和 Click drag head：沿链方向的白色箭头；
-   - Drag child：纯色圆；
-   - Drop drag：刻痕。
+1. **Strictly flat**: solid fills and strokes only. No gradients, glows, noise or textures — only a little opacity. Every animation is built from translation, scale, stroke width and opacity of geometric primitives (circle, arc, rectangle, polygon, line segment).
+2. **Keep Cytoid's identity**: round notes, white outer ring, two-ring hold, diamond flick, arrowed drag head, solid-circle drag child, static capsule drop, white dashed drag line, and scan-direction colouring all stay. Sizes follow measured *visible* bodies (see §2) rather than Cytoid's transform ratios.
+3. **Timing cues only where needed**:
+   - Click and Flick are played on the beat. Their timing feedback follows Cytus II's structure: a calm pre-roll, an accelerating finish, and a blink right before the judgement. Linear growth only says "still early"; acceleration, convergence and blinking say "now".
+   - Holds can be pressed early and the drag family only follows a path. They reach a steady pose as fast as possible, then stay still and offer no timing read-out.
+4. **Restrained external hints**: decorations outside the note (the lock ticks, the corner brackets) are peripheral only — low opacity, small displacement, never competing with chart reading.
+5. **Shape over colour**: every note has a distinct silhouette so colour-blind players can tell them apart by shape alone:
+   - Click: solid coloured ball whose inner core grows, with the 1-2-3 depth colouring;
+   - Hold: outer ring plus a borderless dark core and a static centre circle;
+   - Long hold: outer ring plus a borderless dark core and a static centre square, plus corner brackets;
+   - Drag head and click drag head: a white arrow pointing along the chain;
+   - Drag child: a solid coloured circle;
+   - Drop drag: two notch marks.
 
-   Click drag child 与 Drag child 形状相同，只靠颜色区分。
-6. **判定特效要小**：特效范围基本不超出 note 外径的 1.5 倍，密集段落叠加时也不会刺眼。
+   The click drag child shares the drag child's shape and is told apart by colour only.
+6. **Small clear effects**: effects stay within roughly 1.5× the note's outer radius, so dense sections never glare.
 
-## 2. 坐标与尺寸
+## 2. Coordinates and Sizes
 
-- 设计单位 `unit = 128px`，即 Click 的外径。图元坐标以 note 中心为原点，+y 朝下；角度 0 指向 12 点方向，顺时针为正。
-- 各类型相对 Click 的尺寸：Drag head 0.675（= Cytoid 可见实测值）、Drag child 0.375、Flick 1.125、Drop drag 0.8，其余为 1。Click drag head 与 Click 相同。Drag head / child 不再沿用 Cytoid 变换比例（0.8 / 0.65）：按可见主体实测，Cytoid 实际是 0.675 / 0.274（sprite 留白 + 子物体缩放），Cytus II 是 0.99 / 0.49，两者头：子都在 2–2.5:1；head 0.675 取 Cytoid 可见实测值，child 0.375 为折中，头:子 ≈ 1.8:1。
-- 描边与宽度（单位 u）：
-  - 主环 0.085u，细线 0.022u；
-  - **Hold 身体（进度条）宽 0.284u**，Long hold 相同，取自 Cytoid HoldLine；
-  - Hold 进度环：中心半径 1.34R，宽 0.083u，取自 Cytoid ProgressRing；
-  - **Drag 连线宽 0.0716u**，白色虚线，划线和间隔各 0.0358u，取自 Cytoid DragLine。
+- The design unit is `unit = 128px`, the click's outer diameter. Primitive coordinates use the note centre as origin, +y down; angle 0 points at 12 o'clock and grows clockwise.
+- Sizes relative to the click: drag head 0.675 (Cytoid's measured *visible* body), drag child 0.375, flick 1.125, drop drag 0.8, everything else 1. The click drag head matches the click. The drag head / child no longer follow Cytoid's transform ratios (0.8 / 0.65): measured by visible body, Cytoid actually renders 0.675 / 0.274 (sprite insets + child scales) while Cytus II renders 0.99 / 0.49 — a head : child ratio of 2–2.5 : 1 in both. We take the head at Cytoid's measured 0.675 and the child at a compromise 0.375, giving ≈ 1.8 : 1.
+- Strokes and widths (in units u):
+  - main ring 0.085u, hairline 0.022u;
+  - **hold body (progress bar) width 0.284u**, identical for the long hold, from Cytoid's HoldLine;
+  - hold progress ring: centre radius 1.34R, width 0.083u, from Cytoid's ProgressRing;
+  - **drag line width 0.0716u**, white dashed, 0.0358u dash and gap, from Cytoid's DragLine.
 
-## 3. 颜色系统（Hue 驱动）
+## 3. Colour System (hue driven)
 
-- 颜色家族与 Cytoid 的填充色槽位一一对应：`click / hold / flick / long-hold / drag / click-drag / drop-click / drop-drag`。每个家族都分 **up / down** 两个扫描方向，对应 Cytoid 的 `UseAlternativeColor`。
-- 用户只需要选择 **OKLCH 色相**，亮度和彩度由 `fitLightness(h)` 与 `tokens.chroma` 决定。黄绿区间会自动提亮，所以任意色相的视觉权重都与默认配色一致。这比让用户直接选 hex 更安全，UX 也更好。
-- 每个色相会派生出 5 个角色色：
-  - `fill`：主填充；
-  - `deep`：深一阶，用于 Hold 暗核心与 ping、Flick 刻痕、Drag child 内细环、Drop drag 刻痕；
-  - `light`：浅一阶，用于涟漪；
-  - **1-2-3 深度刻度**：`track`（1）· `deep`（2）· `fill`（3，本色），供 Click 和 Flick 的颜色递进使用；
-  - `track`：暗轨道，用于未填充底盘和 Hold 身体；
-  - `ring`：外环与连线，默认白色。
-- 兼容 Cytoid 的自定义颜色：家族覆盖值也可以直接写 `#rrggbb`，此时保留该颜色自身的亮度和彩度，并且 **不受** `hueShift` 影响。
-- 还支持全局 `hueShift`、`saturation`（设为 0 即单色模式）和 `ring` 外环色。
-- 判定色沿用 Cytoid 默认值：Perfect `#5BC0EB`、Great `#FDE74C`、Good `#9BC53D`、Bad `#E55934`。Miss 改为中性灰 `#6B6F7A`，以便在深色背景上看清。
+- Colour families map one-to-one onto Cytoid's fill slots: `click / hold / flick / long-hold / drag / click-drag / drop-click / drop-drag`. Every family has **up / down** scan-direction variants, matching Cytoid's `UseAlternativeColor`.
+- The user only picks an **OKLCH hue**; lightness and chroma derive from `fitLightness(h)` and `tokens.chroma`. Yellow-greens are brightened automatically, so every hue carries the same visual weight as the defaults. Safer — and better UX — than picking raw hex.
+- Each hue derives five role colours:
+  - `fill`: the main fill;
+  - `deep`: one step darker — hold core and ping, flick slit, drag-child inner hairline, drop-drag notches;
+  - `light`: one step lighter — ripples;
+  - **the 1-2-3 depth scale**: `track` (1) · `deep` (2) · `fill` (3, the true colour), used by the click/flick colour progression;
+  - `track`: the dim track, used for unfilled bases and hold bodies;
+  - `ring`: the outer ring and lines, white by default.
+- Cytoid custom colours are compatible: a family override may also be a `#rrggbb` value, in which case that colour's own lightness and chroma are kept and it is **not** affected by `hueShift`.
+- A global `hueShift`, `saturation` (0 = monochrome) and a `ring` colour are also supported.
+- Grade colours follow Cytoid's defaults: Perfect `#5BC0EB`, Great `#FDE74C`, Good `#9BC53D`, Bad `#E55934`. Miss becomes a neutral grey `#6B6F7A` so it reads on the dark background.
 
-默认色相（up / down）：
+Default hues (up / down):
 
-| 家族 | up | down |
+| Family | up | down |
 |---|---|---|
-| Click、Hold、Flick、Drop click | 247（蓝） | 20（红） |
-| **Click drag（head 与 child）** | 247（蓝） | 20（红），与 Click 一致 |
-| Long hold | 88（金） | 70（琥珀） |
-| Drag、Drop drag | 160（绿） | 160（绿） |
+| Click, Hold, Flick, Drop click | 247 (blue) | 20 (red) |
+| **Click drag (head and child)** | 247 (blue) | 20 (red), matching Click |
+| Long hold | 88 (gold) | 70 (amber) |
+| Drag, Drop drag | 160 (green) | 160 (green) |
 
-Click drag 仍是一个独立家族，可以单独改色。
+The click drag remains its own family and can be re-coloured independently.
 
-## 4. 片段（Clip）模型
+## 4. The Clip Model
 
-每种 note 由若干片段组成，片段参数 `x` 的含义由 `mode` 决定：
+Every note is composed of clips; the meaning of a clip's parameter `x` depends on its `mode`:
 
-| mode | x | 用途 |
+| mode | x | used by |
 |---|---|---|
-| `normalized` | 入场进度 p ∈ [0,1]，窗口终点 = 判定时刻 | enter；名义时长 1.2 s，实际按 intro→hit 窗口拉伸 |
-| `static` | 忽略 | Drop 的静态图（只烘焙 1 帧） |
-| `once` | 判定后的秒数 | clear-perfect/great/good/bad、miss |
-| `loop` | 秒数，周期 = duration，首尾无缝 | hold-loop（0.6 s） |
-| `progress` | 玩法进度 ∈ [0,1] | hold-progress |
+| `normalized` | entry progress p ∈ [0,1]; the window ends at the hit time | enter; nominal length 1.2 s, stretched to the real intro→hit window |
+| `static` | ignored | the drop still image (baked as 1 frame) |
+| `once` | seconds since judgement | clear-perfect/great/good/bad, miss |
+| `loop` | seconds, period = duration, seamless | hold-loop (0.6 s) |
+| `progress` | gameplay progress ∈ [0,1] | hold-progress |
 
-Hold 的持续阶段拆成三层叠加，自下而上依次是 `press`（note 本体）、`loop`（本体内部的收缩动画）和 `progress`（进度环）。拆层后，帧动画也能在运行时与矢量版本按完全相同的方式合成。
+A hold's active phase stacks three layers, bottom to top: `press` (the note body), `loop` (an animation inside the body) and `progress` (the progress ring). The split means frame animations compose at runtime exactly like the vector version.
 
-## 5. 各类型规格
+## 5. Per-Kind Specification
 
-p 为入场进度。下表区间都指 p 的取值范围，例如 “0–0.1 淡入”。
+p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 
 ### Click / Click drag head
-- **结构**：实心球、核心和白色外环，颜色使用 **1-2-3 深度刻度**：
-  - 一开始球体和核心都是深度 2（`deep`），note 读作一个纯色的球；
-  - 随着判定临近，核心从深度 2 升到深度 3（`fill`，即本色）并扩张，背景从深度 2 降到深度 1（`track`）；
-  - 颜色递进使用 ease-in-out（0.1–0.94），核心随分化进度淡入（若在渐入期就整层叠上同色半透明 core，中心会出现一块更亮的圆斑）；
-  - 三个色阶的**亮度差压缩到原来的一半**（`DEPTH_CONTRAST = 0.5`：`fill` 锚定不动，`deep`、`track` 的亮度各向 `fill` 靠拢一半，色相/饱和度不变），命中前的明暗对比尖峰减半，避免把视线从扫描线上拉走。
+- **Structure**: solid ball, core and white outer ring, coloured on the **1-2-3 depth scale**:
+  - at first the ball and core are both depth 2 (`deep`) — the note reads as one solid-coloured ball;
+  - as the hit approaches, the core rises from depth 2 to depth 3 (`fill`, the true colour) and grows while the background sinks from depth 2 to depth 1 (`track`);
+  - the colour progression eases in-out (0.1–0.94) and the core fades in with the divergence (stacking a translucent same-colour core during the fade would paint a brighter dot at the centre);
+  - the lightness gaps between the three stops are **compressed to one half** (`DEPTH_CONTRAST = 0.5`: `fill` stays anchored while `deep` and `track` move halfway toward it in lightness, hue/chroma unchanged), halving the pre-hit contrast spike so the eye stays on the scan line.
 
-  深度递进仍是入场语言，但刻意克制：时机主要由扫描线承载，note 只作地标。
-- **时间反馈**：参考 Cytus II 的 Click 逐帧拆解。原作的结构是：前 1/4 几乎静止的暗环；中段点亮，核心很小；最后约 0.4 s 外圈的同心环向内收拢，同时核心加速膨胀；判定前 2 帧暗下再亮起。扁平化的对应做法：
-  - 0–0.1 淡入；0–0.5 整体缩放 0.62→1；0–0.4 外环由 3 段弧拼合。这是平静的预备段。
-  - 0–0.94 核心以 **ease-out（三次方）** 从小点长到 0.8 倍内径，起点与渐入同步（p = 0）：出生后先快后慢，远在判定前就趋于静止，命中前不再有加速冲刺感。判定时核心是本色，外圈留一圈深度 1 的暗色。
-  - 0.68–1 一道细白 **收拢环** 从 1.9R **按时间线性** 收拢到外环上，粗细只有发丝线的 0.6–1.1 倍（初版的一半）。透明度不超过 0.25（初版的一半），只作为极弱的周边提示；线性运动让玩家能读出速度。
-  - 0.86–0.89 **首次闪烁**：紧贴结尾闪烁的引导闪，形态相同（白核 α 0.6、外环加粗 25%），与结尾闪构成双闪节奏；
-  - 0.92–1 **结尾闪烁**：核心闪白（最高 α 0.6），外环加粗 25%，在 p = 1 时正好回落。
-- **Click drag head**：时间反馈与 Click 完全相同，核心上叠加白色箭头，指向链的下一个节点（`heading`）。
+  The depth progression remains part of the entry language but is deliberately restrained: timing is carried by the scan line and the note is only a landmark.
+- **Timing feedback**: modelled frame-by-frame on Cytus II's click. The original: a nearly still dark ring for the first quarter; the middle lights up with a tiny core; in the last ~0.4 s a concentric ring converges inward while the core accelerates; a 2-frame dip before the hit. The flat equivalent:
+  - 0–0.1 fade in; 0–0.5 global scale 0.62→1; 0–0.4 the outer ring assembles from 3 arcs. This is the calm pre-roll.
+  - 0–0.94 the core grows from a dot to 0.8× the inner radius with **ease-out (cubic)**, starting with the fade-in (p = 0): fast after spawn, settled long before the hit, no last-second rush. At the hit the core is the true colour with a depth-1 rim left around it.
+  - 0.68–1 a thin white **approach ring** converges from 1.9R onto the ring **linearly in time**, only 0.6–1.1× the hairline thick (half of the original width) and no more than 0.25 opacity (also half) — a whisper of a peripheral cue; the linear motion keeps the speed readable.
+  - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6, ring thickened 25%), forming a double-blink rhythm;
+  - 0.92–1 the **final blink**: the core flashes white (up to α 0.6) and the ring thickens 25%, settling exactly at p = 1.
+- **Click drag head**: identical timing to the click, with a white arrow over the core pointing at the next chain node (`heading`).
 
 ### Hold
-- **形状**与 Click 明显不同：
-  - 粗外环；
-  - 半径 0.55R 的 **deep 色暗核心**，无边框，位置取自 Cytoid HoldNoteRing 的内环；
-  - 核心中央是 **静止的** 小白圆圈（半径 0.2R）。
+- **Shape**, clearly distinct from the click:
+  - a thick outer ring;
+  - a **deep-coloured dark core** at radius 0.55R with no border, positioned at Cytoid HoldNoteRing's inner ring;
+  - a **static** small white circle at the core's centre (radius 0.2R).
 
-  Hold 不使用箭头，因为箭头会让玩家误以为要拖动。
-- **入场**：Hold 允许提前按下，所以 **不提供时间读数**。0–0.35 迅速成形，0.2–0.42 中心圆圈弹出，之后保持静止。
-- **press**（0.2 s）：本体缩到 0.86，中心圆圈保持不动。
-- **loop**（0.6 s，画在本体之上，首尾无缝）：
-  - **内部 ping**：暗色核心本身做类似 Tailwind CSS `animate-ping` 的动画。每半个周期（与外部涟漪同频、同相）核心圆盘的一份副本在前 75% 内放大到 2 倍并淡出，曲线 ≈ cubic-bezier(0, 0, 0.2, 1)。副本被裁切在头部内径之内，不会压暗白环；中心图形保持静止，画在最上层。
-  - **外部脉冲**：两道细浅色涟漪相差半个周期，在进度环外侧扩散。
-- **progress**：沿用 Cytoid ProgressRing 的位置和宽度（中心 1.34R，宽 0.083u）。白色领先段长 4/3·p，fill 色段长 p。
-- **身体（进度条）** `holdBody`：
-  - 宽 0.284u，与 Cytoid 相同；
-  - 入场进度 0.3–0.9 期间从头部下方展开；
-  - 中心虚线在按住时向头部滚动；
-  - 已完成部分为实心 fill 加白色中线，末端是白色横杠。
+  Holds carry no arrows — arrows would suggest dragging.
+- **Entry**: holds can be pressed early, so there is **no timing read-out**. 0–0.35 snap into shape, 0.2–0.42 the centre circle pops in, then stillness.
+- **press** (0.2 s): the body sinks to 0.86; the centre circle stays put.
+- **loop** (0.6 s, drawn above the body, seamless):
+  - **inner ping**: the dark core itself plays a Tailwind `animate-ping`-style animation. Every half period (same frequency and phase as the outer ripples) a copy of the core disc scales to 2× and fades out over the first 75%, curve ≈ cubic-bezier(0, 0, 0.2, 1). The copy is clipped to the head's inner radius so it never dims the white ring; the centre glyph stays still, drawn on top.
+  - **outer pulses**: two thin light-coloured ripples, half a period apart, expanding outside the progress ring.
+- **progress**: Cytoid ProgressRing's position and width (centre radius 1.34R, width 0.083u). The white lead spans 4/3·p, the fill spans p.
+- **Body (progress bar)** `holdBody`:
+  - width 0.284u, same as Cytoid;
+  - unrolls from under the head at entry progress 0.3–0.9;
+  - the centre dashes scroll toward the head while held;
+  - the completed part is solid fill with a white midline, ending in a white bar.
 
 ### Long hold
-- 与 Hold 相同，另有三处差别：
-  - 金色；
-  - 中心图形是 **方框**，边长按视觉面积与圆圈匹配（半边长 = 0.82 × 圆圈半径）；
-  - 四角括号在 0.1–0.45 从 1.6R 收拢到 1.28R。
-- **身体** `longHoldBody`：竖贯整个游玩区域，宽度与 Hold 相同。已完成部分从 note 向上下两端同时延伸。**末段坍缩**：progress 0.86→1.0 时整根柱子（暗轨 + 双轨 + 完成段）从左右向内收窄到 15% 宽（对应 Cytus II LongHold_Line 末段坍缩，按进度归一化驱动，时长越长收得越慢），缓动先快后慢（`LONG_HOLD_SHRINK_EASE`，现为 outSine）。
-- **clear**：增加一道竖直光束，向上下延伸约 3R 后收窄淡出。
+- Same as hold, with three differences:
+  - gold;
+  - the centre glyph is a **square** sized to match the circle's visual area (half-side = 0.82 × circle radius);
+  - the corner brackets converge from 1.6R to 1.28R at 0.1–0.45.
+- **Body** `longHoldBody`: a full-height rail through the play area, same width as hold. The completed part extends from the note toward both edges at once. **Final-stage collapse**: at progress 0.86→1.0 the whole pillar (track, rails and done fill) narrows from left and right toward its centre down to 15% width (the Cytus II LongHold_Line end-stage collapse, progress-keyed — longer holds collapse more slowly), easing fast-then-slow (`LONG_HOLD_SHRINK_EASE`, currently outSine).
+- **clear**: adds a vertical beam that extends ~3R up and down, then narrows and fades.
 
-### Drag 系列（Drag head / Drag child / Click drag child）
-- 玩家只需要关注拖动路径，所以 **p = 0.2 时就进入稳态**，之后完全静止。
-- **Drag head**：白环、满填充，加上沿链方向的 **白色箭头**（Cytoid CDragFill 形状）。
-  - 箭头角度由 `createContext(..., { heading })` 指定，0 表示向上，顺时针为正。
-  - 帧动画按箭头朝上烘焙，使用时整体旋转 sprite；圆形本体是旋转对称的，旋转不影响外观。
-  - **触发后（hit 或 miss）**：head 跟随扫描线沿连线移动，此时贴图用 drag head 入场的**最后一帧**（稳态姿态，与触发时外观一致）；若是 click drag head，则用同一末帧 + Click 族配色。
-- **Drag child**：与 Cytoid 一样是 **纯色圆**。唯一的内部装饰是 0.62R 处一道低对比度的 deep 细环，不会吸引视线，也不影响判断节点位置。
-- **Click drag child**：与 Drag child 完全相同，只是颜色跟随 Click。
-- **连线** `dragLine`：**不改动 Cytoid 原设计**。
-  - 白色虚线，宽 0.0716u，占空比 50%；
-  - 虚线图案锚定在源 note 上；
-  - `lead` 从源 note 的入场开始生长，`trail` 在扫描线经过时从源端收回。
+### Drag series (Drag head / Drag child / Click drag child)
+- Players only follow the path, so **the steady pose arrives at p = 0.2** and nothing moves afterwards.
+- **Drag head**: white ring, full fill, plus a **white arrow** pointing along the chain (Cytoid's CDragFill shape).
+  - The arrow angle comes from `createContext(..., { heading })`: 0 points up, clockwise positive.
+  - Frames are baked arrow-up; rotate the whole sprite in use — the round body is rotationally symmetric, so rotation is invisible on it.
+  - **After triggering (hit or miss)**: the head follows the scan line along the connection, drawn with the drag head entry's **last frame** (the steady pose, matching how it looked at the moment of triggering); a click drag head uses the same last frame in Click-family colours.
+- **Drag child**: a **solid coloured circle**, same as Cytoid. The only inner decoration is a low-contrast deep hairline ring at 0.62R — never attention-grabbing, never interfering with reading node positions.
+- **Click drag child**: identical to the drag child; only the colour follows Click.
+- **Connection** `dragLine`: **unchanged from Cytoid**.
+  - white dashed, 0.0716u wide, 50% duty;
+  - the dash pattern is anchored to the source note;
+  - `lead` grows from the source note's entry window; `trail` retracts from the source as the scan line passes.
 
 ### Flick
-- **结构**：菱形外环、菱形底和菱形核心（与 Click 相同的 1-2-3 深度递进），以及中心竖向刻痕（deep 色）。两侧箭头的开口为 90°。刻痕是对 Cytoid 分割菱形的扁平化呼应。核心采用与 Click 相同的时间语言：ease-out 增长（先快后慢、提前稳定），双闪烁（0.86–0.89 + 0.92–1）。
-- **入场**：
-  - 0–0.45 菱形四边从各自中点向两端生长；
-  - 中心竖向刻痕随核心同步出现：长度跟随核心的 ease-out 生长，透明度 0.05–0.45 ease-out 淡入；
-  - 左右两个向外的 V 形箭头 **ease-out** 收拢（先快后慢），p = 0.45 进入稳态，命中前保持静止。原 Cytoid 的“提前 0.25 s 锁定 + snap”按“note 不承载计时”的新前提移除。
-- **clear**：4 段扇区弧，加上左右两条较短的水平冲击条和水平方向的碎片。另有 **向右扫出的 V 形箭头**，表示滑动方向。箭头 **虚、宽**，高度与中间的竖向刻痕差不多（约 0.76R），描边粗，透明度不超过 0.42。开口角度为 90°，与 Flick 菱形的角以及 note 两侧的箭头一致；整个动画中尺寸、角度和描边都不变，只有位置和透明度变化。数量为 Perfect 3 个、Great 2 个、Good 和 Bad 各 1 个，依次延迟 0.08 出发。
-  - 动画固定按向右烘焙。玩家向左滑时把整个特效旋转 180°；以后若支持任意方向，也是整体旋转。
+- **Structure**: a diamond outline, diamond base and diamond core (the same 1-2-3 depth progression as the click), plus a centre vertical slit (deep). The side chevrons open at 90°. The slit is a flat nod to Cytoid's split diamond. The core shares the click's timing language: ease-out growth (fast first, settled early) and a double blink (0.86–0.89 + 0.92–1).
+- **Entry**:
+  - 0–0.45 the diamond's four edges grow from their midpoints;
+  - the centre slit appears with the core: its length follows the core's ease-out growth, opacity easing out over 0.05–0.45;
+  - the two outward chevrons converge with **ease-out** (fast first, then slow), settled at p = 0.45 and still before the hit. Cytoid's "lock 0.25 s early + snap" was removed under the new premise that notes carry no timing cues.
+- **clear**: 4 sector arcs, plus two shorter horizontal impact bars left and right and horizontal shards, plus **V-shaped arrows sweeping right** marking the swipe direction. The arrows are **dashed, wide**, about as tall as the centre slit (~0.76R), thick-stroked, opacity ≤ 0.42. Their opening is 90°, matching the flick diamond's corner and the note's side chevrons; size, angle and stroke never change — only position and opacity. Counts: Perfect 3, Great 2, Good and Bad 1 each, staggered 0.08 apart.
+  - The animation is baked right-facing. For a left swipe rotate the whole effect 180°; any future direction support rotates likewise.
 
 ### Drop click / Drop drag
-- **静态图片，没有入场动画**，与 Cytoid 和 Cytus II 一致。下落位移由消费方计算。帧动画只烘焙 1 帧。
-- 横向胶囊，Drop click 宽高为 1.15 × 0.3 size。
-  - **Drop click**：白边、fill 和白色核心条；
-  - **Drop drag**：更短，没有核心条，改为两道 deep 色竖刻痕；不与其他 note 连线。
+- **A static image with no entry animation**, matching Cytoid and Cytus II. The fall offset is computed by the consumer. One frame is baked.
+- A horizontal capsule; drop click is 1.15 × 0.3 size.
+  - **Drop click**: white edge, fill and a white core bar;
+  - **Drop drag**: shorter, no core bar, replaced by two deep-coloured vertical notches; not connected to other notes.
 
-### 判定特效（所有类型共用一套语法，刻意做小）
-1. **色闪**：0–0.32，note 形状以**判定色**放大到 1.08 倍后塌缩，峰值透明度 0.25（不用白色：全尺寸白色圆干扰视线，也压淡判定文字；实心块只作轻微的颜色确认）。
-2. **冲击环**：半径从 0.95R 扩到 reach·R（outExpo），描边从 1.6W 收到 0.35W（对应 FlatFX 的 1.333→0.333），峰值透明度 0.5。
-   reach 的取值：Click 1.45，Drag 1.4，Flick 1.4，Hold 1.5，Long hold 1.6，Drop 1.3。各评级再乘以系数：Perfect 1、Great 0.9、Good 0.75、Bad 0.6。
-3. **扇区环**：仅 Perfect 和 Great 有。24 段，Flick 为 4 段；位于 0.8–1.02 倍 reach 之间，占空比由 0.62 降到 0.12。
-4. **方形碎片**：Perfect 6 片（白色），Great 4 片，Good 3 片，Bad 无。碎片最远飞到 1.12 倍 reach，由确定性随机生成，烘焙结果可复现。
-5. **按类型的附加效果**：Hold 有第二道环，Long hold 有竖直光束，Flick 有水平冲击条和向右的滑动箭头。
+### Clear effects (one grammar for every kind, deliberately small)
+1. **Colour flash**: 0–0.32, the note shape scales to 1.08× in the **grade colour** then collapses, peak opacity 0.25 (no white: a full-size white disc distracted from the scene and washed out the judgement text; the solid shape is only a mild colour confirmation).
+2. **Shock ring**: radius 0.95R → reach·R (outExpo), stroke 1.6W → 0.35W (matching FlatFX's 1.333 → 0.333), peak opacity 0.5.
+   reach: click 1.45, drag 1.4, flick 1.4, hold 1.5, long hold 1.6, drop 1.3. Grades scale it: Perfect 1, Great 0.9, Good 0.75, Bad 0.6.
+3. **Sector ring**: Perfect and Great only. 24 sectors, 4 for flick; sitting between 0.8 and 1.02× reach, duty falling from 0.62 to 0.12.
+4. **Square shards**: Perfect 6 (white), Great 4, Good 3, Bad none. Shards fly out to 1.12× reach from deterministic randomness — baked results are reproducible.
+5. **Per-kind extras**: hold adds a second ring, long hold a vertical beam, flick horizontal impact bars and right-sweeping swipe arrows.
 
-评级越低，特效时长越长、范围越小：Perfect 0.42 s，Great 0.46 s，Good 0.52 s，Bad 0.56 s。
-**Miss**（0.5 s）：note 熄灭成暗轨道色，外环变灰并向内收缩、略微下沉。不再划 ×，由 MISS 文字表达。残影结构跟随各 note 自己的稳态尾帧：drag child / click drag child 没有外环，收缩时保留内侧的 deep 发丝环（其余圆形 note 维持“盘 + 灰环”结构）。
+Lower grades last longer and reach less: Perfect 0.42 s, Great 0.46 s, Good 0.52 s, Bad 0.56 s.
+**Miss** (0.5 s): the note powers down to the dim track colour, the outer ring greys and shrinks inward with a slight sink. No cross is drawn; the MISS text carries the meaning. The ghost follows each note's own steady end pose: the drag child / click drag child have no outer ring and keep their inner deep hairline as they shrink (other round notes keep the "disc + grey ring" structure).
 
-### 判定文字（PERFECT / GREAT / GOOD / BAD / MISS）
-- **位置**：文字居中在特效中央（note 中心），与 clear 或 miss 特效同时播放，时长相同。
-- **字体**：自绘的单线、45° 倒角几何大写字体，只定义了用到的 14 个字母。
-  - 字形用与 note 相同的折线图元绘制，不依赖字体文件，Canvas、SVG/resvg 烘焙和 Unity 移植三者的结果完全一致；
-  - 字高 0.12u（初版 0.17u，缩小以降低晃眼感），笔画粗 0.18 倍字高，直角斜接、方头端点，与扁平几何风格统一。
-- **颜色**：跟随判定色。MISS 的灰色提亮 35%，保证压在暗色残影上也能读清。
-- **动画**（u = t / 时长）：
-  - 0–0.4 字距从 1 倍字高收拢到 0.32 倍；
-  - 0.02 起每个字母间隔 0.035 依次弹出（缩放 0.4→1，outBack）；
-  - 0.05–0.4 下方细线从中心向两侧展开（MISS 没有下划线）；
-  - 全程上浮 0.12 倍字高（MISS 改为下沉）；
-  - 0.7–1 淡出。
-- **开关**：`renderNote(kind, state, ctx, { judgement: false })` 可关闭文字；单独调用为 `renderJudgement(grade, t, ctx)`。playground 的图鉴、检查器和谱面预览都提供“Judgement text”开关，方便对比。
-- **帧动画**：每个评级只烘焙一份（与 note 类型和方向无关），输出在 `judgement/<grade>`，贴图以文字中心为锚点，叠放在 note 中心即可。`--cylheim` 时 PERFECT 额外输出为 `PERFECT_Gold_top_00146–00158.png`。
+### Judgement text (PERFECT / GREAT / GOOD / BAD / MISS)
+- **Position**: centred on the effect (the note centre), played alongside the clear or miss effect with the same duration.
+- **Typeface**: a custom monoline, 45°-chamfered geometric capital set; only the 14 letters in use are defined.
+  - Glyphs are drawn with the same polyline primitives as the notes — no font files — so Canvas, SVG/resvg baking and a Unity port all render identically;
+  - cap height 0.12u (down from the original 0.17u, to reduce glare), stroke 0.18 × cap height, mitred corners, square caps, matching the flat geometric style.
+- **Colour**: follows the grade. The MISS grey is lifted 35% so it reads over the dim ghost.
+- **Animation** (u = t / duration):
+  - 0–0.4 letter tracking closes from 1.0× cap height to 0.32×;
+  - from 0.02 each letter pops in staggered 0.035 apart (scale 0.4→1, outBack);
+  - 0.05–0.4 a thin underline grows from the centre (none for MISS);
+  - throughout, the text rises 0.12× cap height (MISS sinks instead);
+  - 0.7–1 fade out.
+- **Toggle**: `renderNote(kind, state, ctx, { judgement: false })` hides the text; on its own it is `renderJudgement(grade, t, ctx)`. The playground gallery, inspector and chart preview all provide a "Judgement text" toggle for comparison.
+- **Frames**: baked once per grade (independent of note kind and direction) into `judgement/<grade>`, anchored at the text centre — overlay at the note centre. With `--cylheim`, PERFECT is additionally emitted as `PERFECT_Gold_top_00146–00158.png`.
 
-## 6. 交付形态
+## 6. Deliverables
 
-### 矢量（Cytoid 当前方案）
-- `renderNote(kind, state, ctx)` 返回场景树，`holdBody / longHoldBody / dragLine` 负责可拉伸部件。
-- 场景树只包含 6 种图元，Unity 中可以用 Shapes、LineRenderer 或 SpriteShape 一一对应，也可以继续沿用 Cytoid 现有的 ring/fill sprite 加遮罩。
-- 所有动画都是 `seg / lerp / ease` 的组合，没有任何状态，可逐行移植到 C#。参见 `src/core/ease.ts`。
-- **透明度约定**：组的 opacity **逐级乘到叶子图元上**，不做离屏合成；同一图元的填充和描边也各自混合。这正是游戏引擎里每个 sprite 单独设置 alpha 的行为，Canvas 预览、SVG/resvg 烘焙和 Unity 移植三者因此保持一致。
-- `createContext` 的 `direction` 只决定配色（对应 Cytoid 的 `UseAlternativeColor`，消费方按 Cytoid 的规则自行算出，包括 `is_forward` 和 Drop 的 `NoteDirection`）。Hold 身体和箭头的朝向由独立的 `bodyDirection` 决定，默认与 `direction` 相同，以支持故事板覆盖和反向页面。
+### Vector (Cytoid's current approach)
+- `renderNote(kind, state, ctx)` returns a scene tree; `holdBody / longHoldBody / dragLine` handle the stretchable parts.
+- The tree contains only 6 primitive kinds, mapping one-to-one onto Unity's Shapes, LineRenderer or SpriteShape — or Cytoid's existing ring/fill sprites with masks.
+- Every animation is a combination of `seg / lerp / ease` with no state, portable line by line to C#. See `src/core/ease.ts`.
+- **Opacity convention**: group opacity **multiplies down onto leaf primitives** with no offscreen composition; a primitive's fill and stroke blend separately. That is exactly how per-sprite alpha behaves in a game engine, so Canvas preview, SVG/resvg baking and a Unity port all agree.
+- `createContext`'s `direction` only selects colours (Cytoid's `UseAlternativeColor`, which consumers compute by Cytoid's own rules, including `is_forward` and the drop `NoteDirection`). The hold body and arrow orientations follow a separate `bodyDirection`, defaulting to `direction`, to support storyboard overrides and reversed pages.
 
-### 帧动画（Cytus II / Cylheim 方案）
-- 运行 `pnpm bake`（参数见 `scripts/bake.ts`）后输出到 `<out>/`：
-  - `manifest.json`，格式为 `cytoid-notes/frames@1`，记录 fps、每个片段的 mode、帧数、帧尺寸、锚点和采样公式；
-  - `<kind>/<dir>/<clip>/<clip>_00000.png`：独立帧；
-  - `<kind>/<dir>/<clip>.sheet.png`：图集，行列数写在 manifest 里；
-  - `bodies/<dir>/<family>/*.png`：可平铺的 Hold、Long hold 身体条带和白色虚线连线；
-  - `cylheim/`（加 `--cylheim` 参数时生成）：沿用 Cylheim `src/images/designer` 的文件名和帧号。烘焙时按 Cylheim 的帧时间线（含重复帧）逐帧反采样，保证动画节奏与矢量版完全一致。
-- **采样规则**：`normalized` 采用右端点采样，第 i 帧画的是 p = (i+1)/N 时的姿态，播放时取 `i = min(N−1, floor(p·N))`。因此每帧显示的是所在时间片终点的姿态，比连续时间最多超前 1/N，最后一帧正好是判定时刻的姿态。Cylheim 的取帧方式与此相同。
-- 帧图锚点都在中心 (0.5, 0.5)。画布按全部帧的包围盒对称裁切。
-- 颜色已烘焙进帧图。需要自定义色相时，用 `--palette palette.json` 重新烘焙，或用 `--hue-shift` 整体旋转色相。
+### Frames (the Cytus II / Cylheim approach)
+- `pnpm bake` (flags in `scripts/bake.ts`) writes to `<out>/`:
+  - `manifest.json`, format `cytoid-notes/frames@1`: fps, each clip's mode, frame count, frame size, anchor and sampling formula;
+  - `<kind>/<dir>/<clip>/<clip>_00000.png`: individual frames;
+  - `<kind>/<dir>/<clip>.sheet.png`: sheet, with rows and columns in the manifest;
+  - `bodies/<dir>/<family>/*.png`: tileable hold / long hold body strips and the white dashed drag line;
+  - `cylheim/` (with `--cylheim`): Cylheim's `src/images/designer` file names and frame numbers. Frames are reverse-sampled along Cylheim's frame timelines (including repeated frames) so the animation rhythm matches the vector version exactly.
+- **Sampling**: `normalized` clips use right-endpoint sampling — frame i draws p = (i+1)/N, and playback takes `i = min(N−1, floor(p·N))`. Each frame therefore shows the pose at the end of its time slice, at most 1/N ahead of continuous time, with the last frame exactly at the hit pose. Cylheim samples the same way.
+- Frame anchors are all centre (0.5, 0.5). Canvases are cropped symmetrically around the bounding box of every frame.
+- Colours are baked in. For custom hues re-bake with `--palette palette.json`, or rotate all hues with `--hue-shift`.
 
-### Cylheim 适配说明
-- Enter（Click / Hold / Long hold / Drag / DragChild / Flick）、Drop 静态图（`Note-DropClick.png` / `Note-DropDrag.png`，宽度对齐原图）和 Bloom（Click / Drag / Flick / Hold / LongHold）可以直接替换使用。
-  - 帧时间线：Enter 为 30 fps（含重复帧）；Bloom 为 51 fps，前 3 或 4 帧各显示一次，其余帧各显示两次。烘焙时按每帧的实际显示时刻反采样。因为 Cylheim 各家族的 Bloom 窗口长度不同（0.33–0.67 s），我们 0.42 s 的特效会被均匀压缩或拉伸进这个窗口。
-  - 尺寸：Cylheim 会再乘一次自己的显示倍率（Hold / LongHold ×0.83，Drag head ×0.8，Drag child ×0.42，Flick ×0.8）。烘焙时按 `174px / 128 ÷ 倍率` 放大来抵消，所以屏幕上看到的大小仍符合本设计。Hold 进入按住状态后，Cylheim 的倍率会变成 ×1，Button 序列也按 ×1 烘焙。
-  - Hold 的 17–40 号帧会被 grouped-popup 预加载，其中奇数帧 25–39 不在普通时间线上，按帧号插值补齐。
-  - Cylheim 中的 Click drag head 用的是 Drag 的贴图，而在本设计里它是 Click 加箭头。另外，Drag 贴图中的箭头朝上，Cylheim 需要按链方向旋转 sprite。
-- Hold 的 Button 和 Fire 已按原名输出，但 Cylheim 会循环播放 Button，Fire 则带 83px 锚点偏移和加色混合，需要在 Cylheim 侧写一个小适配器。更推荐的做法是新增一个读取 `manifest.json` 的 provider。
+### Cylheim adaptation notes
+- Enter (click / hold / long hold / drag / drag child / flick), drop stills (`Note-DropClick.png` / `Note-DropDrag.png`, width-aligned to the originals) and Bloom (click / drag / flick / hold / long hold) drop straight in.
+  - Frame timelines: Enter at 30 fps (with repeated frames); Bloom at 51 fps — the first 3–4 frames show once, the rest twice. Baking reverse-samples each frame at its actual display time. Because Cylheim's bloom windows differ per family (0.33–0.67 s), our 0.42 s effect is compressed or stretched uniformly into that window.
+  - Sizes: Cylheim multiplies by its own display scales (hold / long hold ×0.83, drag head ×0.8, drag child ×0.42, flick ×0.8). Baking pre-scales by `174px / 128 ÷ scale` to cancel it, so on-screen sizes still match this design. Once a hold starts, Cylheim's scale becomes ×1 and the button sequence is baked at ×1 too.
+  - Hold frames 17–40 are preloaded for grouped popups; odd frames 25–39 are not on the normal timeline and are filled by interpolation over frame numbers.
+  - Cylheim renders the click drag head with the drag textures, while this design styles it as a click plus an arrow. Also, the drag textures' arrows point up — Cylheim must rotate the sprite along the chain.
+- Hold button and fire sequences are exported under their original names, but Cylheim loops button and plays fire with an 83px anchor offset and additive blending — a small adapter on the Cylheim side is needed. The better fix is a provider that reads `manifest.json` directly.

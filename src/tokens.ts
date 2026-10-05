@@ -29,7 +29,7 @@ export const FAMILY_OF: Record<NoteKind, Family> = {
   'drag-head': 'drag',
   'drag-child': 'drag',
   'flick': 'flick',
-  // "玩法和样式同 Click" — the head is a click note that starts a chain
+  // "same gameplay and styling as Click" — the head is a click note that starts a chain
   'click-drag-head': 'click',
   'click-drag-child': 'click-drag',
   'drop-click': 'drop-click',
