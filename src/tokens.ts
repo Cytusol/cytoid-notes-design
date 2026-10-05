@@ -46,16 +46,20 @@ export const tokens = {
   /** Click note outer diameter in design px. Every size is relative to it. */
   unit: 128,
 
-  /** Relative outer size per kind (Cytoid `GameConfig` ratios). */
+  /**
+   * Relative outer size per kind. Drag head / child are a measured compromise between
+   *  Cytoid's *visible* sizes (0.675 / 0.274 — transform ratios × sprite insets) and
+   *  Cytus II's (≈0.99 / ≈0.49, Cylheim nostalgic skin); head : child ≈ 2 : 1 in both.
+   */
   size: {
     'click': 1,
     'hold': 1,
     'long-hold': 1,
-    'drag-head': 0.8,
-    'drag-child': 0.65,
+    'drag-head': 0.75,
+    'drag-child': 0.375,
     'flick': 1.125,
     'click-drag-head': 1,
-    'click-drag-child': 0.65,
+    'click-drag-child': 0.375,
     'drop-click': 1,
     'drop-drag': 0.8,
   } satisfies Record<NoteKind, number>,

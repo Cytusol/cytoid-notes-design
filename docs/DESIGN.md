@@ -6,7 +6,7 @@
 
 1. **纯扁平**：只用纯色填充和描边。不用渐变、发光、噪点或纹理，只有少量透明度变化。
    所有动画都由几何图元（圆、弧、矩形、多边形、线段）的位移、缩放、描边宽度和透明度构成。
-2. **保留 Cytoid 的识别度**：圆形 note、白色外环、双环 Hold、菱形 Flick、带箭头的 Drag head、纯色圆的 Drag child、静态胶囊 Drop、白色虚线 Drag 连线，以及 Cytoid 的尺寸比例和按扫描方向区分的配色都保持不变。
+2. **保留 Cytoid 的识别度**：圆形 note、白色外环、双环 Hold、菱形 Flick、带箭头的 Drag head、纯色圆的 Drag child、静态胶囊 Drop、白色虚线 Drag 连线，以及按扫描方向区分的配色都保持不变；尺寸以可见主体实测为准（见 §2），不再盲从 Cytoid 变换比例。
 3. **只在需要时给出时间线索**：
    - Click 和 Flick 需要读点击时刻。时间反馈参考 Cytus II 的结构：先平静地预备，最后加速收尾，并在判定前闪一下。线性增长只能告诉玩家“还早”，加速、收拢和闪烁才能告诉玩家“就是现在”。
    - Hold 允许提前按下，Drag 系列只需要跟随路径。它们会尽快进入稳态，之后保持静止，不提供时间读数。
@@ -25,7 +25,7 @@
 ## 2. 坐标与尺寸
 
 - 设计单位 `unit = 128px`，即 Click 的外径。图元坐标以 note 中心为原点，+y 朝下；角度 0 指向 12 点方向，顺时针为正。
-- 各类型相对 Click 的尺寸沿用 Cytoid `GameConfig`：Drag head 0.8、Drag child 0.65、Flick 1.125、Drop drag 0.8，其余为 1。Click drag head 与 Click 相同。
+- 各类型相对 Click 的尺寸：Drag head 0.75、Drag child 0.375、Flick 1.125、Drop drag 0.8，其余为 1。Click drag head 与 Click 相同。Drag head / child 不再沿用 Cytoid 变换比例（0.8 / 0.65）：按可见主体实测，Cytoid 实际是 0.675 / 0.274（sprite 留白 + 子物体缩放），Cytus II 是 0.99 / 0.49，两者头：子都在 2–2.5:1；0.75 / 0.375 取二者折中，保持同样的层级关系。
 - 描边与宽度（单位 u）：
   - 主环 0.085u，细线 0.022u；
   - **Hold 身体（进度条）宽 0.284u**，Long hold 相同，取自 Cytoid HoldLine；
