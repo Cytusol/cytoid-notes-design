@@ -9,7 +9,7 @@
  *  0.00–0.10  fade in
  *  0.00–1.00  size follows the fitted Cytus II S-curve (`tokens.sizeCurve.click`):
  *             a small dim spawn (0.32), one smooth slow-fast-slow growth into a
- *             +12 % peak at p 0.88 — together with the lead-in blink and the
+ *             +6 % peak at p 0.88 — together with the lead-in blink and the
  *             converging ring — then a smooth settle, exactly 1.0 (the hit
  *             pose) from p 0.976
  *  0.00–0.10  fade in; 0–0.40 the outer ring assembles from 3 arcs
@@ -65,7 +65,7 @@ export function blinkAmount(p: number): number {
 /**
  * Enter size at progress `p` (1 = hit pose): one fitted S-curve carries the
  * ball from the small dim spawn (0.32) up through the full-size crossing
- * (p ≈ 0.74) to the +12 % overshoot peak at p 0.878 — together with the
+ * (p ≈ 0.74) to the +6 % overshoot peak at p 0.878 — together with the
  * lead-in blink and the converging ring — and a second S settles it back to
  * exactly 1.0 by p 0.976. Anchors and shape are fitted to the measured Cytus
  * II frames (`tokens.sizeCurve`); the source's pixel staircase and texture
@@ -169,7 +169,7 @@ export const click: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: (p, ctx) => clickEnter(p, ctx),
-    note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +12 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %.',
+    note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +6 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %.',
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, seed: 1 }),
   miss: makeMissClip('circle'),

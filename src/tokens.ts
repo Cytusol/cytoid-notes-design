@@ -105,9 +105,9 @@ export const tokens = {
    */
   sizeCurve: {
     s: [0.7, 0.75],
-    click: { spawn: 0.319, peak: 1.121, peakP: 0.878, settleP: 0.976 },
-    dragHead: { spawn: 0.293, peak: 1.109, peakP: 0.766, settleP: 0.872 },
-    dragChild: { spawn: 0.259, peak: 1.059, peakP: 0.766, settleP: 0.851 },
+    click: { spawn: 0.319, peak: 1.06, peakP: 0.878, settleP: 0.976 },
+    dragHead: { spawn: 0.293, peak: 1.05, peakP: 0.766, settleP: 0.872 },
+    dragChild: { spawn: 0.259, peak: 1.03, peakP: 0.766, settleP: 0.851 },
   },
 
   /** Judgement colours — Cytoid defaults. */

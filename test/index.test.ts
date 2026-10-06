@@ -125,10 +125,10 @@ describe('designs', () => {
 
   it('size curves: one smooth sweep up, one settle — no wobble, exact landing', () => {
     const curves = [
-      ['click', clickSize, 0.878, 1.121],
-      ['flick', clickSize, 0.878, 1.121],
-      ['drag-head', dragHeadSize, 0.766, 1.109],
-      ['drag-child', dragChildSize, 0.766, 1.059],
+      ['click', clickSize, 0.878, 1.06],
+      ['flick', clickSize, 0.878, 1.06],
+      ['drag-head', dragHeadSize, 0.766, 1.05],
+      ['drag-child', dragChildSize, 0.766, 1.03],
     ] as const
     for (const [name, size, peakP, peak] of curves) {
       let prev = 0

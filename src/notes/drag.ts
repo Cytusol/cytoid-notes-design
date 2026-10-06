@@ -2,7 +2,7 @@
  * DRAG family. Players follow the *path*, not the tap timing. The size no
  * longer holds a custom steady-by-p-0.2 phase: head and child follow their
  * own fitted Cytus II S-curves (`tokens.sizeCurve.dragHead` / `.dragChild`) —
- * a small spawn, one smooth slow-fast-slow growth into the +11 % / +6 %
+ * a small spawn, one smooth slow-fast-slow growth into the +5 % / +3 %
  * peak at p 0.77, settled back to exactly 1.0 from p 0.87 / 0.85. Only the
  * shades wake WAKE_DROP steps up (600 → 400) on the palette scale over the
  * click's WAKE window (page cue).
@@ -29,7 +29,7 @@ const STEADY = 0.2
 /**
  * Enter size at progress `p` (1 = hit pose): one fitted S-curve per phase
  * (see `tokens.sizeCurve`) — spawn 0.29 / 0.26, continuous growth into the
- * +11 % / +6 % peak at p 0.77, settled back to exactly 1.0 from p 0.87 / 0.85.
+ * +5 % / +3 % peak at p 0.77, settled back to exactly 1.0 from p 0.87 / 0.85.
  */
 export const dragHeadSize = riseSettleCurve(tokens.sizeCurve.dragHead, tokens.sizeCurve.s)
 export const dragChildSize = riseSettleCurve(tokens.sizeCurve.dragChild, tokens.sizeCurve.s)
@@ -51,7 +51,7 @@ export const dragHead: NoteDesign = {
     id: 'enter',
     mode: 'normalized',
     duration: tokens.time.enter,
-    note: 'Fitted Cytus II S-curve: small spawn, smooth growth into the +11 % peak at p 0.77, settled from p 0.87. Ring closes from 2 halves by p 0.2, white arrow along the chain (rotate by heading). Path matters, not timing.',
+    note: 'Fitted Cytus II S-curve: small spawn, smooth growth into the +5 % peak at p 0.77, settled from p 0.87. Ring closes from 2 halves by p 0.2, white arrow along the chain (rotate by heading). Path matters, not timing.',
     draw: headDraw,
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.4, sectors: 24, seed: 5 }),
