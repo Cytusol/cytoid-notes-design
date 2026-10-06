@@ -14,7 +14,7 @@ import { Application } from 'pixi.js'
 import { parseChart } from './chart'
 import { AudioClock, ManualClock } from './clock'
 import { autoplayStats, JudgeEngine } from './judgement'
-import { layoutBoard, layoutPlayer } from './layout'
+import { layoutBoard, layoutPlayer, NOTE_HEIGHT_RATIO } from './layout'
 import { PlayStage } from './stage'
 
 export interface PlayerOptions {
@@ -108,6 +108,12 @@ export class Player {
     // player box aspect-clamped 4:3–22:9 + centred; note field inset within it
     this.lastScreen = layoutPlayer(w, h)
     this.lastBoard = layoutBoard(w, h)
+    // note size derives from the play area height (core behaviour), the
+    // slider is a multiplier on top — never a fixed pixel size
+    const scalePx = (this.lastBoard.height * NOTE_HEIGHT_RATIO * this.options.scale) / tokens.unit
+    this.judge?.setRadius((this.lastBoard.height * NOTE_HEIGHT_RATIO * this.options.scale) / 2)
+    const stageOptions = { ...this.stageOptions, scale: scalePx }
+    this.stage.setOptions(stageOptions)
     const stats = this.stats
     const hud = stats && stats.judged > 0
       ? {

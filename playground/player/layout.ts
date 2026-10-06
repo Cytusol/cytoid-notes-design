@@ -20,6 +20,9 @@ export interface BoardRect {
   height: number
 }
 
+/** Core click-note parity: full note diameter ≈ 0.41 × play-area height. */
+export const NOTE_HEIGHT_RATIO = 0.412
+
 const MIN_RATIO = 4 / 3
 const MAX_RATIO = 22 / 9
 const SIDE_RATIO = 0.09 // (1 − 0.82) / 2
