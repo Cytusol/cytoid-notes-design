@@ -20,6 +20,15 @@ export interface ClearFlavor {
   sectors: number
   /** extra: horizontal streaks (flick), vertical beam (long hold), double ring (hold, click) */
   extra?: 'streaks' | 'beam' | 'double'
+  /**
+   * What the opening colour flash shows. 'note' (default): the note's own
+   * steady shape — the thing that was hit. 'tail': a body-width disc — the
+   * hold family plays its clear at the hold end, where there is no note to
+   * flash; the disc is the release dot (lit white at progress 0.9–1)
+   * detonating. Deliberately rotation-free so baked frames work for either
+   * body direction.
+   */
+  flash?: 'note' | 'tail'
   seed: number
 }
 
@@ -70,9 +79,13 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
   const reach = 1 + (flavor.reach - 1) * g.reach
 
   // 1. core flash: a faint grade-colour pop that collapses (no white, and peak
-  // opacity only 0.25 — it marks the hit without pulling the eye)
+  // opacity only 0.25 — it marks the hit without pulling the eye). The hold
+  // family flashes the release dot (body width) instead of a phantom note.
   const flashK = seg(u, 0, 0.32)
-  const flash = solid(shape, R * lerp(1, 1.08, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32))), color, ctx, 0.25 * (1 - seg(u, 0.2, 0.32)))
+  const grow = lerp(1, 1.08, outCubic(flashK)) * (1 - outQuad(seg(u, 0.12, 0.32)))
+  const flash = flavor.flash === 'tail'
+    ? disk(ctx.unit * tokens.stroke.holdBody * grow, color, 0.25 * (1 - seg(u, 0.2, 0.32)))
+    : solid(shape, R * grow, color, ctx, 0.25 * (1 - seg(u, 0.2, 0.32)))
 
   // 2. shock ring, thickness 1.333 → 0.333 (Cytoid FlatFX); peak opacity 0.5 —
   // a full-strength ring pulled the eye away from the notes around it

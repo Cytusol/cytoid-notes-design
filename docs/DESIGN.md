@@ -112,13 +112,15 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - the completed part is solid fill with a white midline;
   - **end: rounded + full stop.** The far end is a half-circle drawn *inside* the hold length (the end point does not move). The conveyor stops `holdEndLength` (0.9 × body width) before the end, leaving a gap and one dim neutral-400 dot (radius 2.2 hairlines) at the centre of the half-circle — no white, no overhang, nothing parallel to the scanline, so it stays quiet while reading. At progress 0.9–1 the dot lights white and pops to 3.2 hairlines (outBack), meeting the white midline: the release cue. Replaces the earlier white bar (1.7× body width), which read like a scanline segment or a neighbour's ring.
 
+- **clear (at the hold end)**: like Cytus II, the burst plays where the scanline is the moment the hold completes — the note's **end position** (for a hold that is the body's far end, where the full-stop dot has just lit at progress 0.9–1). That dot is the seed of the effect: the opening flash is a grade-colour disc of **body width** (`ClearFlavor.flash = 'tail'`), then the shared grammar takes over (shock + double ring, sector ring, shards — all rotation-free, so one bake serves either body direction). Misses stay on the head: an early release happens at the scanline. The clips stay origin-centred; the anchor is the consumer's (Cylheim positions its Hold_Boom at the hold end natively).
+
 ### Long hold
 - Same as hold, with three differences:
   - gold;
   - the centre glyph is a **square** sized to match the circle's visual area (half-side = 0.82 × circle radius);
   - the corner brackets converge from 1.6R to 1.28R at 0.1–0.45.
 - **Body** `longHoldBody`: a full-height rail through the play area, same width as hold. The completed part extends from the note toward both edges at once. **Final-stage collapse**: at progress 0.86→1.0 the whole pillar (track, rails and done fill) narrows from left and right toward its centre down to 15% width (the Cytus II LongHold_Line end-stage collapse, progress-keyed — longer holds collapse more slowly), easing fast-then-slow (`LONG_HOLD_SHRINK_EASE`, currently outSine).
-- **clear**: adds a vertical beam that extends ~3R up and down, then narrows and fades.
+- **clear**: the same rule as hold — the burst plays at the **scanline's position the moment the hold completes** (the note's end position). The pillar is drawn full-height but only ends in *time*: its end is wherever the line then is, mid-board — not the screen edge. Adds a vertical beam that extends ~3R up and down, then narrows and fades, landing on the pillar line.
 
 ### Drag series (Drag head / Drag child / Click drag child)
 - Players only follow the path, so the ring, arrow and hairline **assemble by p = 0.2** and the wake (p 0.45–0.7) is colour-only — nothing on the note tracks the beat. The **size follows the fitted Cytus II S-curves** (`tokens.sizeCurve.dragHead` / `.dragChild`): spawn 0.29 / 0.26, one smooth growth into the **+5 % / +3 % peak at p 0.77**, settled back to exactly 1.0 from p 0.87 / 0.85. Only the fill wakes from 600 to 400 over p 0.45–0.7 (the page cue; the child’s hairline goes 800 → 600 with it, and the head's ring + arrow wake neutral 400 → 50 on the same window).
@@ -150,8 +152,8 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - **Drop drag**: shorter, no core bar, replaced by two 600 vertical notches; not connected to other notes.
 
 ### Clear effects (one grammar for every kind, deliberately small)
-Every effect plays at an overall **50 % opacity** (`EFFECT_ALPHA`): the burst marks the hit without hiding the notes around it; the judgement text is unaffected.
-1. **Colour flash**: 0–0.32, the note shape scales to 1.08× in the **grade colour** then collapses, peak opacity 0.25 (no white: a full-size white disc distracted from the scene and washed out the judgement text; the solid shape is only a mild colour confirmation).
+Every effect plays at an overall **50 % opacity** (`EFFECT_ALPHA`): the burst marks the hit without hiding the notes around it; the judgement text is unaffected. **Anchor**: on the note — except the hold family, whose clears play at the **scanline's position the moment the hold completes** (Cytus II behaviour; the note's end position; see §Hold).
+1. **Colour flash**: 0–0.32, the note shape scales to 1.08× in the **grade colour** then collapses, peak opacity 0.25 (no white: a full-size white disc distracted from the scene and washed out the judgement text; the solid shape is only a mild colour confirmation). Holds flash a **body-width disc** instead (`flash: 'tail'`): at the hold end there is no note — the flash is the release dot detonating.
 2. **Shock ring**: radius 0.95R → reach·R (outExpo), stroke 1.6W → 0.35W (matching FlatFX's 1.333 → 0.333), peak opacity 0.5.
    reach: click 1.45, drag 1.4, flick 1.4, hold 1.5, long hold 1.6, drop 1.3. Grades scale it: Perfect 1, Great 0.9, Good 0.75, Bad 0.6.
 3. **Sector ring**: Perfect and Great only. 24 sectors, 4 for flick; sitting between 0.8 and 1.02× reach, duty falling from 0.62 to 0.12.
@@ -162,7 +164,7 @@ Lower grades last longer and reach less: Perfect 0.42 s, Great 0.46 s, Good 0.52
 **Miss** (0.5 s, also at the 50 % overall opacity): the note powers down to the dim 800 shade, the outer ring greys and shrinks inward with a slight sink. No cross is drawn; the MISS text carries the meaning. The ghost follows each note's own steady end pose: the drag child / click drag child have no outer ring and keep their inner 600 hairline as they shrink (other round notes keep the "disc + grey ring" structure).
 
 ### Judgement text (PERFECT / GREAT / GOOD / BAD / MISS)
-- **Position**: centred on the effect (the note centre), played alongside the clear or miss effect with the same duration.
+- **Position**: centred on the effect (the note centre; the hold end for hold clears), played alongside the clear or miss effect with the same duration.
 - **Typeface**: a custom monoline, 45°-chamfered geometric capital set; only the 14 letters in use are defined.
   - Glyphs are drawn with the same polyline primitives as the notes — no font files — so Canvas, SVG/resvg baking and a Unity port all render identically;
   - cap height 0.12u (down from the original 0.17u, to reduce glare), stroke 0.18 × cap height, mitred corners, square caps, matching the flat geometric style.

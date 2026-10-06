@@ -182,6 +182,14 @@ export function paintChart(ctx: CanvasRenderingContext2D, width: number, height:
         }
         continue
       }
+      // hold clears play where the scanline is the moment the hold ends (Cytus II):
+      // the note's end position — for the full-height pillar a line position
+      // mid-board, not the screen edge (notePosition with hit = end is exactly
+      // the scanner's position at that moment)
+      if (state!.phase === 'clear' && note.end) {
+        const endPos = notePosition({ ...note, hit: note.end }, width, height)
+        ctx.translate(endPos.x - pos.x, endPos.y - pos.y)
+      }
       drawScene(ctx, renderNote(note.kind, state!, dc, { judgement }))
       ctx.restore()
     }

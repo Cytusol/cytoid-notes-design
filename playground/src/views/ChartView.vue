@@ -51,7 +51,7 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
     </div>
     <aside class="panel chart-notes">
       <span class="eyebrow">CHART CONTENTS</span><h3>Ten kinds. One stage.</h3><p class="caption">
-        1.1-page approach window. Page colours follow the note's hit direction. Holds finish at their end time.
+        1.1-page approach window. Page colours follow the note's hit direction. Holds finish at their end time — the burst plays where the scanline then is: the body's end for holds, the line's position for the full-height pillar.
       </p><div v-for="kind in chartKinds" :key="kind" class="kind-row">
         <span class="dot" :style="{ background: palette.note(kind, 'up')[400] }" />{{ KIND_LABEL[kind] }}
       </div><hr><p class="caption">

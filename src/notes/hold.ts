@@ -21,6 +21,12 @@
  *   press    (once, 0.2 s)   head sinks to 0.86 scale (glyph stays)
  *   loop     (loop, 0.6 s)   dark-core ping inside + two outer ripples (seamless)
  *   progress (progress 0–1)  Cytoid-style progress ring: white lead (4/3·p) + fill (p)
+ * The clear effect plays where the scanline is the moment the hold **ends**
+ * (Cytus II): the consumer anchors the origin-centred clip at the note's end
+ * position — the body's far end for a hold, the line's position mid-board for
+ * the full-height long-hold pillar — where the release dot has just lit; the
+ * opening flash is that dot detonating (`ClearFlavor.flash = 'tail'`), not a
+ * phantom note.
  * Bodies (see ./bodies.ts) are stretched elements, not frame clips.
  */
 import type { SceneNode } from '../core/scene'
@@ -196,7 +202,7 @@ function makeHold(long: boolean): NoteDesign {
       loop: { id: 'hold-loop', mode: 'loop', duration: tokens.time.holdLoop, draw: holdLoop(long), note: 'The dark core pings (Tailwind-style scale 1→2 + fade) under the still glyph; two outer ripples pulse. Drawn above the head. Seamless.' },
       progress: { id: 'hold-progress', mode: 'progress', duration: 1, draw: holdProgress(long), note: 'Cytoid-style progress ring: white lead at 4/3·p, fill at p.' },
     },
-    clear: makeClearClips({ shape: 'circle', reach: long ? 1.6 : 1.5, sectors: 24, extra: long ? 'beam' : 'double', seed: long ? 4 : 3 }),
+    clear: makeClearClips({ shape: 'circle', reach: long ? 1.6 : 1.5, sectors: 24, extra: long ? 'beam' : 'double', flash: 'tail', seed: long ? 4 : 3 }),
     miss: makeMissClip('circle'),
   }
 }

@@ -1,7 +1,7 @@
 import type { Direction, Palette } from 'cytoid-notes-design'
 import type { ParsedChart } from './chart'
 import type { BoardRect } from './layout'
-import type { DerivedFrame, DerivedNote, DeriveOptions } from './state'
+import type { DerivedFrame, DerivedNote, DeriveOptions, Position } from './state'
 import { clamp01, createContext, dragLine, group, holdBody, longHoldBody, renderNote } from 'cytoid-notes-design'
 /**
  * Pixi stage for the player: turns `deriveFrame` output into display
@@ -275,7 +275,12 @@ export class PlayStage {
       }
     }
     else if (d.state) {
-      parts.push(renderNote(d.kind, d.state, ctx, { judgement }))
+      // hold clears play where the scanline is the moment the hold ends
+      // (Cytus II behaviour): the burst is anchored at the note's end position
+      const tail = clearAnchor(d, board)
+      parts.push(tail
+        ? group([renderNote(d.kind, d.state, ctx, { judgement })], { transform: { x: tail.x - d.pos.x, y: tail.y - d.pos.y } })
+        : renderNote(d.kind, d.state, ctx, { judgement }))
     }
 
     const live = d.follow ?? d.pos
@@ -332,6 +337,21 @@ export class PlayStage {
  * transparent at both ends. The CSS linear gradient is approximated with
  * opacity-graded segments (flat convention: opacity yes, gradients no).
  */
+/**
+ * Board-space anchor of a hold's clear burst: the note's end position — where the
+ *  scanline is the moment the hold completes (Cytus II plays it there; for the
+ *  full-height long-hold pillar that is a line position mid-board, not the screen
+ *  edge). Null = play on the note (misses stay on the head: an early release
+ *  happens at the scanline).
+ */
+function clearAnchor(d: DerivedNote, board: BoardRect): Position | null {
+  if (d.state?.phase !== 'clear')
+    return null
+  if (d.note.kind === 'hold' || d.note.kind === 'long_hold')
+    return notePos(d.note, d.note.position.endY, board)
+  return null
+}
+
 function bordersScene(width: number, height: number) {
   const segments = 14
   const line = (y: number) => group(Array.from({ length: segments }, (_, i) => {
