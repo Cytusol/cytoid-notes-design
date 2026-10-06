@@ -39,15 +39,15 @@ export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
   const dash = holdDashPeriod(ctx) / 2
   const items: SceneNode[] = [
     // track
-    { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -shown, w: Wb, h: shown, fill: ctx.palette.track, opacity: 0.92 },
+    { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -shown, w: Wb, h: shown, fill: ctx.palette[800], opacity: 0.92 },
   ]
   // centre conveyor dashes (scroll toward the head while holding)
   if (shown > done) {
-    items.push({ type: 'line', x1: 0, y1: s * shown, x2: 0, y2: s * done, stroke: ctx.palette.fill, strokeWidth: hair * 2.4, dash: [dash, dash], dashOffset: (o.t ?? 0) * Wb * 4, opacity: 0.75 })
+    items.push({ type: 'line', x1: 0, y1: s * shown, x2: 0, y2: s * done, stroke: ctx.palette[400], strokeWidth: hair * 2.4, dash: [dash, dash], dashOffset: (o.t ?? 0) * Wb * 4, opacity: 0.75 })
   }
   if (done > 0) {
     items.push(
-      { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -done, w: Wb, h: done, fill: ctx.palette.fill },
+      { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -done, w: Wb, h: done, fill: ctx.palette[400] },
       { type: 'line', x1: 0, y1: 0, x2: 0, y2: s * done, stroke: ctx.palette.ring, strokeWidth: hair * 2, cap: 'butt' },
     )
   }
@@ -89,15 +89,15 @@ export function longHoldBody(o: LongHoldBodyOptions, ctx: DrawContext): SceneNod
   const p = clamp01(o.progress)
   const shrink = LONG_HOLD_SHRINK_EASE(seg(p, LONG_HOLD_SHRINK_FROM, 1))
   const Wb = WbFull * (1 - (1 - LONG_HOLD_SHRINK_CORE) * shrink)
-  const rail = (x: number): SceneNode => ({ type: 'line', x1: x, y1: -top, x2: x, y2: bottom, stroke: ctx.palette.fill, strokeWidth: hair * 1.6, opacity: 0.9 })
+  const rail = (x: number): SceneNode => ({ type: 'line', x1: x, y1: -top, x2: x, y2: bottom, stroke: ctx.palette[400], strokeWidth: hair * 1.6, opacity: 0.9 })
   const items: SceneNode[] = [
-    { type: 'rect', x: -Wb / 2, y: -top, w: Wb, h: top + bottom, fill: ctx.palette.track, opacity: 0.55 },
+    { type: 'rect', x: -Wb / 2, y: -top, w: Wb, h: top + bottom, fill: ctx.palette[800], opacity: 0.55 },
     rail(-Wb / 2),
     rail(Wb / 2),
   ]
   if (p > 0) {
     const w = lerp(Wb * 0.6, Wb, Math.min(1, p * 4))
-    items.push({ type: 'rect', x: -w / 2, y: -top * p, w, h: (top + bottom) * p, fill: ctx.palette.fill })
+    items.push({ type: 'rect', x: -w / 2, y: -top * p, w, h: (top + bottom) * p, fill: ctx.palette[400] })
   }
   return group(items, { opacity: seg(appear, 0.3, 0.45) })
 }

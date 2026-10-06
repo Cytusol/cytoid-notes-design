@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Direction, Family, PaletteOptions } from 'cytoid-notes-design'
-import { FAMILIES, FAMILY_LABEL, hexToOklch, KIND_LABEL, NOTE_KINDS, tokens } from 'cytoid-notes-design'
+import { BASE_SHADE, FAMILIES, FAMILY_LABEL, hexToOklch, KIND_LABEL, NOTE_KINDS, SHADES, tokens } from 'cytoid-notes-design'
 import { computed, ref } from 'vue'
 import NoteCanvas from '../components/NoteCanvas.vue'
 import { palette, paletteOptions, storageError, validatePalette } from '../composables/usePalette'
@@ -146,11 +146,15 @@ function download() {
         <div class="section-heading">
           <h3>Family colours</h3><span class="eyebrow">UP / DOWN</span>
         </div><div v-for="family in FAMILIES" :key="family" class="family">
-          <h4>{{ FAMILY_LABEL[family] }}</h4><div v-for="dir in directions" :key="dir" class="family-direction">
-            <span class="dir">{{ dir === 'up' ? '↑' : '↓' }}</span><span class="dot" :style="{ background: palette.family(family, dir).fill }" /><input class="hue-range" type="range" min="0" max="360" step="1" :value="hue(family, dir)" :aria-label="`${family} ${dir} hue`" @input="setColor(family, dir, Number(($event.target as HTMLInputElement).value))"><span class="mono hue-value">{{ hue(family, dir) }}°</span><input class="hex-input mono" :value="typeof inputFor(family, dir) === 'string' ? inputFor(family, dir) : ''" placeholder="#rrggbb" :aria-label="`${family} ${dir} raw hex override`" maxlength="7" @change="hexChange(family, dir, $event)"><button class="reset-family quiet" :aria-label="`Reset ${family} ${dir}`" @click="setColor(family, dir, undefined)">
-              ↺
-            </button>
-          </div>
+          <h4>{{ FAMILY_LABEL[family] }}</h4><template v-for="dir in directions" :key="dir">
+            <div class="family-direction">
+              <span class="dir">{{ dir === 'up' ? '↑' : '↓' }}</span><span class="dot" :style="{ background: palette.family(family, dir)[400] }" /><input class="hue-range" type="range" min="0" max="360" step="1" :value="hue(family, dir)" :aria-label="`${family} ${dir} hue`" @input="setColor(family, dir, Number(($event.target as HTMLInputElement).value))"><span class="mono hue-value">{{ hue(family, dir) }}°</span><input class="hex-input mono" :value="typeof inputFor(family, dir) === 'string' ? inputFor(family, dir) : ''" placeholder="#rrggbb" :aria-label="`${family} ${dir} raw hex override`" maxlength="7" @change="hexChange(family, dir, $event)"><button class="reset-family quiet" :aria-label="`Reset ${family} ${dir}`" @click="setColor(family, dir, undefined)">
+                ↺
+              </button>
+            </div><div class="shade-strip" :aria-label="`${family} ${dir} shades`">
+              <i v-for="s in SHADES" :key="s" :class="{ base: s === BASE_SHADE }" :style="{ background: palette.family(family, dir)[s] }" :title="`${s} ${palette.family(family, dir)[s]}`"><span class="mono">{{ s }}</span></i>
+            </div>
+          </template>
         </div>
       </section>
       <section class="panel palette-section">
@@ -202,6 +206,10 @@ function download() {
 .family h4 { font-weight: 500; font-size: 12px; margin: 0 0 14px; }
 .family-direction { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
 .family-direction input[type=range] { flex: 1; min-width: 70px; }.dir { color: var(--muted); width: 10px; }
+.shade-strip { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; margin: 6px 0 0 22px; }
+.shade-strip i { height: 18px; border-radius: 3px; display: flex; align-items: flex-end; justify-content: center; }
+.shade-strip i.base { outline: 1px solid #fff; outline-offset: 1px; }
+.shade-strip span { font-size: 8px; font-style: normal; color: #fff; mix-blend-mode: difference; opacity: 0.7; }
 .hex-input { width: 88px; font-size: 11px; padding: 8px; } .hue-value { width: 37px; text-align: right; font-size: 11px; color: var(--muted); }
 .reset-family { padding: 6px 8px; }
 .preview-panel { position: sticky; top: 20px; overflow: hidden; }

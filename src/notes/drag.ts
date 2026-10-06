@@ -1,11 +1,12 @@
 /**
  * DRAG family. Players follow the *path*, not the tap timing, so drag heads
- * and children reach their steady pose almost immediately (p = 0.2) and then
- * stay still — no gauge, no late motion.
+ * and children reach their steady shape almost immediately (p = 0.2) and then
+ * stay still — no gauge, no late motion. Only the shades wake WAKE_DROP steps up (600 → 400) on the
+ * palette scale over the click's WAKE window (page cue).
  *
  * Drag head (0.8): white ring + full fill + white arrow pointing along the
  *   chain (`ctx.heading`; frames are baked pointing up — rotate the sprite).
- * Drag child (0.65): solid bead, like Cytoid. Only a faint deep hairline ring.
+ * Drag child (0.65): solid bead, like Cytoid. Only a faint 600 hairline ring.
  * Click drag head: Click timing + the same arrow (see click.ts).
  * Click drag child: identical to drag child, click colours.
  */
@@ -13,8 +14,9 @@ import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { lerp, outCubic, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
+import { tone } from '../palette'
 import { tokens } from '../tokens'
-import { dragArrow, ringWidth } from './click'
+import { dragArrow, ringWidth, wakeAmount, wakeShade } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { assemblingRing, disk, ring } from './parts'
 
@@ -26,7 +28,7 @@ function headDraw(p: number, ctx: DrawContext): SceneNode {
   const W = ringWidth(ctx)
   const k = outCubic(seg(p, 0, STEADY))
   return group([
-    disk(R - W + 0.5, ctx.palette.fill),
+    disk(R - W + 0.5, tone(ctx.palette, wakeShade(400, wakeAmount(p)))),
     dragArrow(ctx, (R - W) * 0.95, outCubic(seg(p, STEADY * 0.3, STEADY))),
     assemblingRing(R - W / 2, W, ctx.palette.ring, 2, k, lerp(-TAU / 4, 0, k)),
   ].filter(Boolean) as SceneNode[], { opacity: seg(p, 0, 0.06), transform: { scale: lerp(0.6, 1, k) } })
@@ -47,29 +49,30 @@ export const dragHead: NoteDesign = {
 
 /**
  * Solid bead — like Cytoid's drag child. The only inner decoration is a
- * low-contrast `deep` hairline ring, so the centre never draws the eye and
+ * low-contrast 600 hairline ring, so the centre never draws the eye and
  * the node position stays crisp.
  */
 function childDraw(p: number, ctx: DrawContext): SceneNode {
   const R = ctx.size / 2
   const k = outCubic(seg(p, 0, STEADY))
+  const w = wakeAmount(p)
   return group([
-    disk(R, ctx.palette.fill),
-    ring(R * 0.62, ctx.unit * tokens.stroke.hair, ctx.palette.deep, 0.7 * k),
+    disk(R, tone(ctx.palette, wakeShade(400, w))),
+    ring(R * 0.62, ctx.unit * tokens.stroke.hair, tone(ctx.palette, wakeShade(600, w)), 0.7 * k),
   ], { opacity: seg(p, 0, 0.06), transform: { scale: lerp(0.5, 1, k) } })
 }
 
-/** Miss ghost in the child's own end pose: bead + deep hairline ring, no outer ring. */
+/** Miss ghost in the child's own end pose: bead + 600 hairline ring, no outer ring. */
 function childMissGhost(ctx: DrawContext, R: number, _W: number, k: number): SceneNode[] {
   return [
-    disk(R * lerp(0.92, 0.75, k), ctx.palette.track, 0.9),
-    ring(R * 0.62 * lerp(1, 0.78, k), ctx.unit * tokens.stroke.hair * lerp(1, 0.6, k), ctx.palette.deep, 0.7),
+    disk(R * lerp(0.92, 0.75, k), ctx.palette[800], 0.9),
+    ring(R * 0.62 * lerp(1, 0.78, k), ctx.unit * tokens.stroke.hair * lerp(1, 0.6, k), ctx.palette[600], 0.7),
   ]
 }
 
 export const dragChild: NoteDesign = {
   kind: 'drag-child',
-  enter: { id: 'enter', mode: 'normalized', duration: tokens.time.enter, draw: childDraw, note: 'Solid bead (Cytoid), faint deep hairline ring, steady by p = 0.2.' },
+  enter: { id: 'enter', mode: 'normalized', duration: tokens.time.enter, draw: childDraw, note: 'Solid bead (Cytoid), faint 600 hairline ring, steady by p = 0.2.' },
   clear: makeClearClips({ shape: 'circle', reach: 1.4, sectors: 24, seed: 6 }),
   miss: makeMissClip('circle', childMissGhost),
 }

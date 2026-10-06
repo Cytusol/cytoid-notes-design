@@ -6,7 +6,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 
 ## Layout
 - `src/tokens.ts` — sizes, strokes, durations, default hues, grade colours. Change numbers here first.
-- `src/palette.ts` — OKLCH hue-driven palette (`createPalette`, `derivePalette`, `fitLightness`).
+- `src/palette.ts` — OKLCH hue-driven palette (`createPalette`, `derivePalette`, `fitLightness`) with a Tailwind-style 50–950 shade scale per family (400 = true colour) and `tone(palette, step)` for fractional steps — all in-note shade motion goes through it.
 - `src/core/` — `scene.ts` (6 primitives + group, bounds), `ease.ts` (seg/lerp/easings/rng), `color.ts` (oklch).
 - `src/notes/` — one file per family (`click`, `hold`, `drag`, `flick`, `drop`), shared `parts.ts`, `effects.ts` (clear/miss), `bodies.ts` (hold body, long hold body, drag line), `judgement.ts` (judgement text: custom chamfered stroke font, centred in the effect), `index.ts` (registry `designs`, `createContext`, `renderNote`, `clipsOf`).
 - `src/render/` — `canvas.ts` (Canvas2D), `svg.ts` (SVG string).
@@ -21,7 +21,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 ## Conventions
 - Clips are pure functions `draw(x, ctx) => SceneNode`; no state, deterministic (use `rng(seed)` for randomness).
 - Angles: 0 = 12 o'clock, clockwise. +y down. Origin = note centre. Unit = 128 design px.
-- Enter clips are `normalized` and must end at the exact hit pose at p = 1. Only Click/Flick carry timing feedback (Cytus II-style: ease-in core, linear approach ring/arrows, blink at 0.92–1); Hold and the Drag series reach a steady pose early (hold p≈0.35, drag p=0.2); Drop notes are `static` (one still image).
+- Enter clips are `normalized` and must end at the exact hit pose at p = 1. Only Click/Flick carry timing feedback (Cytus II-measured: dim pre-roll, shade split 0.25–0.85 (spawn 700; core → 400, base → 800), ease-in core 0.42–0.94, linear approach ring/chevrons at α 0.5 from 0.7, double blink); Hold and the Drag series reach a steady shape early (hold p≈0.35, drag p=0.2) and only wake their colours 600 → 400 over `WAKE` (0.45–0.7) — the page cue that separates next-page notes; Drop notes are `static` (one still image).
 - Keep Cytoid's original drag line (white dashed, 0.0716u) and hold body width (0.284u). Keep clear effects compact (≤ ~1.5× note radius) and peripheral hints faint.
 - Click-drag family defaults to the click hues.
 - Effects must fully fade by `duration` (tested). Loops must be seamless (tested).

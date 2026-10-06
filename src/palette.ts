@@ -1,3 +1,4 @@
+import type { Oklch } from './core/color'
 import type { Direction, Family, Grade, NoteKind } from './tokens'
 import { alpha, hexToOklch, oklch } from './core/color'
 import { FAMILIES, FAMILY_OF, tokens } from './tokens'
@@ -21,16 +22,18 @@ export interface PaletteOptions {
   grades?: Partial<Record<Grade, string>>
 }
 
-/** Fully resolved colours for one family + direction. */
-export interface NotePalette {
-  /** main flat fill */
-  fill: string
-  /** darker step of the fill — flat two-tone shading, inner discs */
-  deep: string
-  /** lighter step — highlights, flashes */
-  light: string
-  /** dim track colour (bodies, ghost shapes) */
-  track: string
+/** Tailwind-style shade steps. 400 is the family's true colour (the note fill). */
+export const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const
+export type Shade = typeof SHADES[number]
+
+/** Step the input colour lands on — the note's true colour. */
+export const BASE_SHADE = 400
+
+/**
+ * Fully resolved colours for one family + direction: a 50–950 scale
+ * (`palette[400]` is the note colour) plus the ring and glyph ink.
+ */
+export interface NotePalette extends Record<Shade, string> {
   /** white ring by default */
   ring: string
   /** dark glyph colour on top of fills */
@@ -55,6 +58,37 @@ export function fitLightness(h: number): number {
   return 0.705 + 0.13 * Math.exp(-((d / 48) ** 2))
 }
 
+/** Lightest L the 50 step approaches. */
+const L_TOP = 0.985
+
+/**
+ * Shape of the scale around the base (400): lighter steps move a fraction of
+ * the way from the base L toward L_TOP, darker steps scale the base L down;
+ * chroma is a multiple of the base chroma. Calibrated so the defaults sit on
+ * Tailwind's OKLCH lightness curve (400 ≈ 0.705) and the former roles map onto
+ * steps: deep → 600, track → 800, light → 300.
+ */
+const SCALE: Record<Shade, { l: number, c: number }> = {
+  50: { l: 0.96, c: 0.12 },
+  100: { l: 0.86, c: 0.25 },
+  200: { l: 0.69, c: 0.45 },
+  300: { l: 0.43, c: 0.6 },
+  400: { l: 0, c: 1 },
+  500: { l: 0.88, c: 0.97 },
+  600: { l: 0.76, c: 0.9 },
+  700: { l: 0.66, c: 0.75 },
+  800: { l: 0.55, c: 0.55 },
+  900: { l: 0.47, c: 0.45 },
+  950: { l: 0.36, c: 0.35 },
+}
+
+function shadeL(base: number, step: Shade): number {
+  const k = SCALE[step].l
+  if (step === BASE_SHADE)
+    return base
+  return step < BASE_SHADE ? base + (Math.max(base, L_TOP) - base) * k : base * k
+}
+
 export function derivePalette(input: ColorInput, opts: { saturation?: number, ring?: string } = {}): NotePalette {
   const sat = opts.saturation ?? 1
   let l: number, c: number, h: number
@@ -67,11 +101,11 @@ export function derivePalette(input: ColorInput, opts: { saturation?: number, ri
     ({ l, c, h } = hexToOklch(input))
   }
   c *= sat
+  const scale = {} as Record<Shade, string>
+  for (const step of SHADES)
+    scale[step] = step === BASE_SHADE ? oklch(l, c, h) : oklch(shadeL(l, step), c * SCALE[step].c, h)
   return {
-    fill: oklch(l, c, h),
-    deep: oklch(l - 0.17, c * 0.9, h),
-    light: oklch(Math.min(0.97, l + 0.13), c * 0.55, h),
-    track: oklch(l * 0.55, c * 0.55, h),
+    ...scale,
     ring: opts.ring ?? tokens.ring,
     ink: oklch(0.24, Math.min(0.04, c * 0.3), h),
     hue: h,
@@ -104,6 +138,41 @@ export function createPalette(options: PaletteOptions = {}): Palette {
 }
 
 export const defaultPalette = createPalette()
+
+const parsed = new WeakMap<NotePalette, Map<Shade, Oklch>>()
+
+function parsedShade(palette: NotePalette, step: Shade): Oklch {
+  let cache = parsed.get(palette)
+  if (!cache)
+    parsed.set(palette, cache = new Map())
+  let v = cache.get(step)
+  if (!v)
+    cache.set(step, v = hexToOklch(palette[step]))
+  return v
+}
+
+/**
+ * Sample the scale at any (fractional) step — piecewise-linear in OKLCH
+ * between neighbouring shades, clamped to [50, 950]. Every in-note colour that
+ * moves between shades goes through this, so all shade motion follows one
+ * path. Exact steps return the scale colour verbatim.
+ */
+export function tone(palette: NotePalette, step: number): string {
+  const s = Math.min(950, Math.max(50, step))
+  let i = 0
+  while (i < SHADES.length - 2 && s > SHADES[i + 1]!) i++
+  const a = SHADES[i]!
+  const b = SHADES[i + 1]!
+  const k = (s - a) / (b - a)
+  if (k <= 0)
+    return palette[a]
+  if (k >= 1)
+    return palette[b]
+  const pa = parsedShade(palette, a)
+  const pb = parsedShade(palette, b)
+  const dh = ((pb.h - pa.h + 540) % 360) - 180
+  return oklch(pa.l + (pb.l - pa.l) * k, pa.c + (pb.c - pa.c) * k, pa.h + dh * k)
+}
 
 /** Snapshot every family into plain hex — handy for exporting to Cytoid settings JSON. */
 export function exportPalette(p: Palette) {

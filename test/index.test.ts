@@ -5,6 +5,7 @@ import {
   createContext,
   createPalette,
   designs,
+  FAMILIES,
   frameIndex,
   GRADES,
   hexToOklch,
@@ -13,18 +14,39 @@ import {
   oklch,
   renderNote,
   sampleTimes,
+  SHADES,
+  tone,
   toSVG,
 } from '../src'
+import { WAKE } from '../src/notes/click'
 
 describe('color', () => {
   it('round-trips hex through oklch', () => {
     const { l, c, h } = hexToOklch('#35A7FF')
     expect(oklch(l, c, h).toLowerCase()).toBe('#35a7ff')
   })
+  it('shade scale: 400 is the input colour, darkens monotonically, tone() hits the steps', () => {
+    const pal = createPalette()
+    for (const fam of FAMILIES) {
+      const p = pal.family(fam, 'up')
+      expect(hexToOklch(p[400]).h, fam).toBeCloseTo(p.hue, 0)
+      const ls = SHADES.map(s => hexToOklch(p[s]).l)
+      for (let i = 1; i < ls.length; i++)
+        expect(ls[i]!, `${fam} ${SHADES[i]}`).toBeLessThan(ls[i - 1]!)
+      for (const s of SHADES)
+        expect(tone(p, s)).toBe(p[s])
+    }
+    const p = pal.family('click', 'up')
+    expect(tone(p, 0)).toBe(p[50])
+    expect(tone(p, 1000)).toBe(p[950])
+    const ls = Array.from({ length: 17 }, (_, i) => hexToOklch(tone(p, 400 + i * 25)).l)
+    for (let i = 1; i < ls.length; i++)
+      expect(ls[i]!).toBeLessThan(ls[i - 1]!)
+  })
   it('palette honours hue overrides and raw hex', () => {
     const p = createPalette({ families: { click: { up: 140, down: '#FF0000' } } })
     expect(p.family('click', 'up').hue).toBeCloseTo(140, 0)
-    expect(p.family('click', 'down').fill.toLowerCase()).toBe('#ff0000')
+    expect(p.family('click', 'down')[400].toLowerCase()).toBe('#ff0000')
   })
 })
 
@@ -71,10 +93,20 @@ describe('designs', () => {
     }
   })
 
-  it('drag series reach a steady pose early', () => {
+  it('drag series reach a steady shape early and a steady pose after waking', () => {
     for (const kind of ['drag-head', 'drag-child', 'click-drag-child'] as const) {
       const ctx = createContext(kind)
-      expect(toSVG(designs[kind].enter.draw(0.25, ctx)), kind).toBe(toSVG(designs[kind].enter.draw(1, ctx)))
+      const draw = designs[kind].enter.draw
+      expect(bounds(draw(0.25, ctx)), kind).toEqual(bounds(draw(1, ctx)))
+      expect(toSVG(draw(WAKE.to, ctx)), kind).toBe(toSVG(draw(1, ctx)))
+    }
+  })
+
+  it('next-page notes read dimmer than notes about to be hit', () => {
+    for (const kind of ['click', 'hold', 'drag-head', 'drag-child'] as const) {
+      const ctx = createContext(kind)
+      const asleep = toSVG(designs[kind].enter.draw(0.3, ctx))
+      expect(asleep, kind).not.toContain(ctx.palette[400])
     }
   })
 

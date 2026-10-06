@@ -53,7 +53,7 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
       <span class="eyebrow">CHART CONTENTS</span><h3>Ten kinds. One stage.</h3><p class="caption">
         1.1-page approach window. Page colours follow the note's hit direction. Holds finish at their end time.
       </p><div v-for="kind in chartKinds" :key="kind" class="kind-row">
-        <span class="dot" :style="{ background: palette.note(kind, 'up').fill }" />{{ KIND_LABEL[kind] }}
+        <span class="dot" :style="{ background: palette.note(kind, 'up')[400] }" />{{ KIND_LABEL[kind] }}
       </div><hr><p class="caption">
         {{ chart.filter((_, i) => gradeFor(i, mix) === 'miss').length }} misses per loop · {{ chartLength }} pages
       </p><p class="caption">

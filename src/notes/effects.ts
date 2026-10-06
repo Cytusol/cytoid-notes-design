@@ -159,7 +159,7 @@ export function missEffect(shape: EffectShape, u: number, ctx: DrawContext, ghos
   const parts = ghost
     ? ghost(ctx, R, W, k)
     : [
-        solid(shape, R * lerp(0.92, 0.75, k), ctx.palette.track, ctx, 0.9),
+        solid(shape, R * lerp(0.92, 0.75, k), ctx.palette[800], ctx, 0.9),
         outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
       ]
   // no cross: the MISS judgement text carries the meaning

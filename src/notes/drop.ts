@@ -23,7 +23,7 @@ function dropStatic(core: boolean) {
     const h = ctx.size * DROP_ASPECT.h
     const W = h * 0.2
     const items: SceneNode[] = [
-      capsule(w - W, h - W, { fill: ctx.palette.fill }),
+      capsule(w - W, h - W, { fill: ctx.palette[400] }),
       capsule(w - W / 2, h - W / 2, { stroke: ctx.palette.ring, strokeWidth: W }),
     ]
     if (core) {
@@ -33,7 +33,7 @@ function dropStatic(core: boolean) {
       const nh = h * 0.42
       for (const s of [-1, 1]) {
         const x = s * w * 0.16
-        items.push({ type: 'line', x1: x, y1: -nh / 2, x2: x, y2: nh / 2, stroke: ctx.palette.deep, strokeWidth: W * 0.9, cap: 'round' })
+        items.push({ type: 'line', x1: x, y1: -nh / 2, x2: x, y2: nh / 2, stroke: ctx.palette[600], strokeWidth: W * 0.9, cap: 'round' })
       }
     }
     return group(items)
