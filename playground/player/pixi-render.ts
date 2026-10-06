@@ -67,15 +67,17 @@ function signature(n: Exclude<SceneNode, { type: 'group' }>): string {
   }
 }
 
-function maskGraphics(c: ClipShape): Graphics & { signatureKey?: string } {
-  const g = new Graphics() as Graphics & { signatureKey?: string }
+/** Build the clip shape as *filled* geometry — see `syncChildren`. */
+function buildMaskShape(g: Graphics, c: ClipShape): void {
   if (c.type === 'circle')
     g.circle(c.cx ?? 0, c.cy ?? 0, c.r)
   else if (c.type === 'rect')
     g.roundRect(c.x, c.y, c.w, c.h, Math.min(c.rx ?? 0, c.w / 2, c.h / 2))
   else
     g.poly(c.points.flat(), true) // ClipShape polys are always closed
-  return g
+  // Pixi v8 renders Graphics masks through the graphics pipe: only fill
+  // instructions create geometry, so a bare path masks everything out.
+  g.fill(0xFFFFFF)
 }
 
 /**
@@ -273,13 +275,16 @@ function syncChildren(parent: Container, nodes: SceneNode[]) {
       e.container.scale.set(t.scaleX, t.scaleY)
       if (n.clip) {
         const key = JSON.stringify(n.clip)
-        if (!e.mask || e.mask.signatureKey !== key) {
-          e.mask?.destroy()
-          e.mask = maskGraphics(n.clip)
+        if (!e.mask) {
+          e.mask = new Graphics() as Graphics & { signatureKey?: string }
+          e.container.addChild(e.mask)
+        }
+        // rebuild in place — the hold body's clip changes every frame while unrolling
+        if (e.mask.signatureKey !== key) {
+          e.mask.clear()
+          buildMaskShape(e.mask, n.clip)
           e.mask.signatureKey = key
         }
-        if (e.mask.parent !== e.container)
-          e.container.addChild(e.mask)
         e.container.mask = e.mask
       }
       else if (e.mask) {

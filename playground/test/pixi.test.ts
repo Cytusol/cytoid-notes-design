@@ -111,6 +111,25 @@ describe('sceneView (pixi adapter)', () => {
     expect((inner.children[0] as Container).y).toBe(2)
   })
 
+  it('fills clip masks and rebuilds them in place', () => {
+    const view = new SceneView()
+    const clip = { type: 'rect' as const, x: -10, y: -20, w: 20, h: 40, rx: 5 }
+    view.setScene({ type: 'group', clip, children: [circle('#fff')] })
+    const inner = view.children[0] as Container
+    const mask = inner.mask as Graphics & { signatureKey?: string }
+    // v8 renders Graphics masks through the graphics pipe — the shape must be
+    // filled, or the stencil stays empty and the masked content disappears
+    expect(mask.context.instructions.map(i => i.action)).toContain('fill')
+    expect(mask.parent).toBe(inner)
+    // a changed clip reuses the same Graphics (the hold body's clip moves each frame)
+    view.setScene({ type: 'group', clip: { ...clip, h: 41 }, children: [circle('#fff')] })
+    expect(inner.mask).toBe(mask)
+    expect(mask.signatureKey).not.toBe(JSON.stringify(clip))
+    // dropping the clip releases the mask
+    view.setScene({ type: 'group', children: [circle('#fff')] })
+    expect(inner.mask).toBeFalsy()
+  })
+
   it('destroyView clears everything', () => {
     const view = new SceneView()
     view.setScene({ type: 'group', children: [circle('#fff')] })
