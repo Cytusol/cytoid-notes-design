@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NoteKind } from 'cytoid-notes-design'
 import type { CanvasFrame } from './StageCanvas.vue'
-import { clipsOf, createContext, designs, drawScene, group, holdBody, KIND_LABEL, longHoldBody, renderNote } from 'cytoid-notes-design'
+import { clamp01, clipsOf, createContext, designs, dragLine, drawScene, group, holdBody, KIND_LABEL, longHoldBody, renderNote, tokens } from 'cytoid-notes-design'
 import { lifecycle } from '../composables/clips'
 import { palette } from '../composables/usePalette'
 import { review } from '../composables/useReview'
@@ -13,9 +13,102 @@ const props = defineProps<{
   index: number
 }>()
 let elapsed = 0
+
+/** Scanline recipe shared by every card: 1.5px line, 6px caps, card-wide. */
+function drawScanline(ctx: CanvasRenderingContext2D, width: number, scanY: number) {
+  ctx.fillStyle = '#e1e5f5'
+  ctx.fillRect(-width / 2, scanY - 0.75, width, 1.5)
+  ctx.fillRect(-width / 2, scanY - 3, 6, 6)
+  ctx.fillRect(width / 2 - 6, scanY - 3, 6, 6)
+}
+
+/**
+ * Drag kinds tell their story with a three-node chain. The focused node stays
+ * horizontally centred: the head card lays the chain out 中右中 (centre → right
+ * → centre, a zigzag that doubles back), a child card 左中右 (head left, focus
+ * centre, next child right). Every node is judged when the scanline crosses its
+ * lane — so the node times fall straight out of the geometry — and the head
+ * keeps sliding along the chain after its own hit, its burst left at the
+ * trigger point (Cytoid chain-follow).
+ */
+function paintDragChain(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const up = review.direction === 'up'
+  const click = props.kind.startsWith('click-')
+  const headKind = click ? 'click-drag-head' : 'drag-head'
+  const childKind = click ? 'click-drag-child' : 'drag-child'
+  const focusHead = props.kind.endsWith('head')
+  const step = up ? -1 : 1
+  const near = height / 2
+  const nodes = focusHead
+    ? [{ x: 0, y: 0 }, { x: width * 0.27, y: step * 42 }, { x: 0, y: step * 84 }]
+    : [{ x: -width * 0.27, y: -step * 36 }, { x: 0, y: 0 }, { x: width * 0.27, y: step * 36 }]
+  const kinds: NoteKind[] = [headKind, childKind, childKind]
+  const hits = nodes.map(n => 1.5 * (near - n.y * (up ? 1 : -1)) / near)
+  const clearDur = tokens.time.clear[review.grade]
+  const t = elapsed % (hits[2]! + clearDur + 0.35)
+  ctx.translate(width / 2, height / 2)
+  const base = { palette: palette.value, direction: review.direction, scale: review.scale }
+  const headingTo = (a: { x: number, y: number }, b: { x: number, y: number }) => Math.atan2(b.x - a.x, -(b.y - a.y))
+  // connections grow toward the next node (arriving ~1s before its judgement,
+  // like Cytoid's DragLineElement) and retract behind it after the source is hit
+  for (let i = 0; i < 2; i++) {
+    const lead = clamp01((t - (hits[i]! - 1.233)) / ((hits[i + 1]! - 0.968) - (hits[i]! - 1.233)))
+    const trail = clamp01((t - hits[i]!) / (hits[i + 1]! - hits[i]!))
+    const line = dragLine({ x1: nodes[i]!.x, y1: nodes[i]!.y, x2: nodes[i + 1]!.x, y2: nodes[i + 1]!.y, lead, trail }, createContext(headKind, base))
+    if (line)
+      drawScene(ctx, line)
+  }
+  const focus = focusHead ? 0 : 1
+  for (let i = 0; i < 3; i++) {
+    const n = nodes[i]!
+    const kind = kinds[i]!
+    const hit = hits[i]!
+    ctx.save()
+    ctx.translate(n.x, n.y)
+    if (t < hit) {
+      // context nodes enter over their own windows; the focus fills the approach
+      const win = i === focus ? 1.5 : 1.2
+      const p = clamp01((t - (hit - win)) / win)
+      if (p > 0)
+        drawScene(ctx, renderNote(kind, { phase: 'enter', p }, createContext(kind, { ...base, heading: headingTo(n, nodes[i + 1] ?? n) }), { judgement: false }))
+    }
+    else {
+      // the head sprite keeps sliding along the chain (a missed head stops it);
+      // drawn under the following node's burst, exactly like the chart
+      if (i === 0 && review.grade !== 'miss' && t < hits[2]!) {
+        const seg = t < hits[1]! ? 0 : 1
+        const a = nodes[seg]!
+        const b = nodes[seg + 1]!
+        const alpha = (t - hits[seg]!) / (hits[seg + 1]! - hits[seg]!)
+        const followKind = click ? 'drag-head' as const : headKind
+        const followCtx = click
+          ? { ...createContext(followKind, { ...base, heading: headingTo(a, b) }), palette: palette.value.family('click', review.direction) }
+          : createContext(followKind, { ...base, heading: headingTo(a, b) })
+        ctx.save()
+        ctx.translate(a.x + (b.x - a.x) * alpha - n.x, a.y + (b.y - a.y) * alpha - n.y)
+        drawScene(ctx, renderNote(followKind, { phase: 'enter', p: 1 }, followCtx, { judgement: false }))
+        ctx.restore()
+      }
+      const since = t - hit
+      const burst = review.grade === 'miss' ? { phase: 'miss' as const, t: since } : { phase: 'clear' as const, grade: review.grade, t: since }
+      if (since <= clearDur)
+        drawScene(ctx, renderNote(kind, burst, createContext(kind, base), { judgement: review.judgement }))
+    }
+    ctx.restore()
+  }
+  // the scanline sweeps straight through, judging each node as it passes
+  const scanY = step * near * (t / 1.5 - 1)
+  if (Math.abs(scanY) <= height / 2 + 3)
+    drawScanline(ctx, width, scanY)
+}
+
 function paint({ ctx, width, height, dt }: CanvasFrame) {
   if (review.playing)
     elapsed += dt * review.speed
+  if (props.kind === 'drag-head' || props.kind === 'click-drag-head' || props.kind === 'drag-child' || props.kind === 'click-drag-child') {
+    paintDragChain(ctx, width, height)
+    return
+  }
   const { state, t, span } = lifecycle(props.kind, elapsed, review.grade)
   const dc = createContext(props.kind, { palette: palette.value, direction: review.direction, scale: review.scale })
   const hold = designs[props.kind].hold
@@ -31,16 +124,10 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
   const anchor = hold ? (props.kind === 'hold' ? (up ? -100 : 100) : (up ? -1 : 1) * height * 0.325) : 0
   const near = (up ? 1 : -1) * (height / 2 - (hold ? 36 : 0))
   const scanY = drop ? 0 : near + ((anchor - near) / (hold ? span : 1.5)) * t
-  const scanner = Math.abs(scanY) <= height / 2 + (hold ? 36 : 0)
-    ? () => {
-        ctx.fillStyle = '#e1e5f5'
-        ctx.fillRect(-width / 2, scanY - 0.75, width, 1.5)
-        ctx.fillRect(-width / 2, scanY - 3, 6, 6)
-        ctx.fillRect(width / 2 - 6, scanY - 3, 6, 6)
-      }
-    : null
+  const onCard = Math.abs(scanY) <= height / 2 + (hold ? 36 : 0)
   if (!state) {
-    scanner?.()
+    if (onCard)
+      drawScanline(ctx, width, scanY)
     return
   }
   if (hold && (state.phase === 'enter' || state.phase === 'holding')) {
@@ -56,7 +143,8 @@ function paint({ ctx, width, height, dt }: CanvasFrame) {
   const fx = renderNote(props.kind, state, dc, { judgement: review.judgement })
   const fy = (hold && state.phase === 'clear' ? anchor : 0) + fall
   drawScene(ctx, fy ? group([fx], { transform: { y: fy } }) : fx)
-  scanner?.()
+  if (onCard)
+    drawScanline(ctx, width, scanY)
 }
 </script>
 
