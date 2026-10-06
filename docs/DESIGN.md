@@ -106,10 +106,11 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - **outer pulses**: two thin light-coloured ripples, half a period apart, expanding outside the progress ring.
 - **progress**: Cytoid ProgressRing's position and width (centre radius 1.34R, width 0.083u). The white lead spans 4/3·p, the fill spans p.
 - **Body (progress bar)** `holdBody`:
-  - width 0.284u, same as Cytoid;
+  - width 0.284u, same as Cytoid (Cytus II's default skin is ≈ 0.31u from the same 56/100 px line texture; see `docs/research/references.md`);
   - unrolls from under the head at entry progress 0.3–0.9;
   - the centre dashes scroll toward the head while held;
-  - the completed part is solid fill with a white midline, ending in a white bar.
+  - the completed part is solid fill with a white midline;
+  - **end: rounded + full stop.** The far end is a half-circle drawn *inside* the hold length (the end point does not move). The conveyor stops `holdEndLength` (0.9 × body width) before the end, leaving a gap and one dim neutral-400 dot (radius 2.2 hairlines) at the centre of the half-circle — no white, no overhang, nothing parallel to the scanline, so it stays quiet while reading. At progress 0.9–1 the dot lights white and pops to 3.2 hairlines (outBack), meeting the white midline: the release cue. Replaces the earlier white bar (1.7× body width), which read like a scanline segment or a neighbour's ring.
 
 ### Long hold
 - Same as hold, with three differences:

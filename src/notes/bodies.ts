@@ -5,8 +5,9 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext } from './types'
-import { clamp01, lerp, outCubic, outSine, seg } from '../core/ease'
+import { clamp01, lerp, outBack, outCubic, outSine, seg } from '../core/ease'
 import { group } from '../core/scene'
+import { ringTone } from '../palette'
 import { tokens } from '../tokens'
 
 export interface HoldBodyOptions {
@@ -25,7 +26,22 @@ export function holdDashPeriod(ctx: DrawContext): number {
   return Math.max(2, Math.round(ctx.unit * tokens.stroke.holdBody * 1.1))
 }
 
-/** Hold body in note-local space. Extends toward -y for `up`, +y for `down`. */
+/**
+ * Length of the hold body's end piece (whole px): the rounded end, the full
+ * stop and the gap before it — no conveyor dashes inside it.
+ */
+export function holdEndLength(ctx: DrawContext): number {
+  return Math.max(2, Math.round(ctx.unit * tokens.stroke.holdBody * 0.9))
+}
+
+/**
+ * Hold body in note-local space. Extends toward -y for `up`, +y for `down`.
+ *
+ * The far end is rounded (half-circle, inside the hold length — the end
+ * point does not move) and the conveyor ends in a full stop: dashes, a gap,
+ * one dim dot. The dot lights white as the fill arrives (progress 0.9–1),
+ * meeting the white midline — the release cue.
+ */
 export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
   const s = ctx.bodyDirection === 'up' ? -1 : 1
   const Wb = ctx.unit * tokens.stroke.holdBody
@@ -35,27 +51,40 @@ export function holdBody(o: HoldBodyOptions, ctx: DrawContext): SceneNode {
   // body unrolls from the head once the head is mostly built (hidden under it before)
   const unroll = outCubic(seg(appear, 0.3, 0.9))
   const shown = L * unroll
-  const done = L * clamp01(o.progress)
+  const p = clamp01(o.progress)
+  const done = L * p
   const dash = holdDashPeriod(ctx) / 2
+  const r = Wb / 2
+  const dashEnd = shown - holdEndLength(ctx)
   const items: SceneNode[] = [
     // track
-    { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -shown, w: Wb, h: shown, fill: ctx.palette[800], opacity: 0.92 },
+    { type: 'rect', x: -r, y: s > 0 ? 0 : -shown, w: Wb, h: shown, fill: ctx.palette[800], opacity: 0.92 },
   ]
-  // centre conveyor dashes (scroll toward the head while holding)
-  if (shown > done) {
-    items.push({ type: 'line', x1: 0, y1: s * shown, x2: 0, y2: s * done, stroke: ctx.palette[400], strokeWidth: hair * 2.4, dash: [dash, dash], dashOffset: (o.t ?? 0) * Wb * 4, opacity: 0.75 })
+  // centre conveyor dashes (scroll toward the head while holding); phase stays anchored at the far end
+  if (dashEnd > done) {
+    items.push({ type: 'line', x1: 0, y1: s * dashEnd, x2: 0, y2: s * done, stroke: ctx.palette[400], strokeWidth: hair * 2.4, dash: [dash, dash], dashOffset: (o.t ?? 0) * Wb * 4 + shown - dashEnd, opacity: 0.75 })
   }
   if (done > 0) {
-    items.push(
-      { type: 'rect', x: -Wb / 2, y: s > 0 ? 0 : -done, w: Wb, h: done, fill: ctx.palette[400] },
-      { type: 'line', x1: 0, y1: 0, x2: 0, y2: s * done, stroke: ctx.palette.ring, strokeWidth: hair * 2, cap: 'butt' },
-    )
+    items.push({ type: 'rect', x: -r, y: s > 0 ? 0 : -done, w: Wb, h: done, fill: ctx.palette[400] })
+    if (dashEnd > 0)
+      items.push({ type: 'line', x1: 0, y1: 0, x2: 0, y2: s * Math.min(done, dashEnd), stroke: ctx.palette.ring, strokeWidth: hair * 2, cap: 'butt' })
   }
-  // end cap: a small white bar across the end
-  if (unroll >= 1) {
-    items.push({ type: 'rect', x: -Wb * 0.85, y: s * L - hair * 1.6, w: Wb * 1.7, h: hair * 3.2, fill: ctx.palette.ring })
-  }
-  return group(items, { opacity: seg(appear, 0.3, 0.45) })
+  // full stop: dim neutral at rest, lights white as the fill lands
+  const lit = outCubic(seg(p, 0.9, 1))
+  items.push({
+    type: 'circle',
+    cx: 0,
+    cy: s * (shown - r),
+    r: lerp(hair * 2.2, hair * 3.2, outBack(lit, 2)),
+    fill: lit > 0 ? ctx.palette.ring : ringTone(ctx.palette, 0),
+    opacity: lerp(0.75, 1, lit),
+  })
+  // rounded far end: clip the whole body to a capsule whose near end hides under the head
+  const rx = Math.min(r, (shown + r) / 2)
+  return group(items, {
+    opacity: seg(appear, 0.3, 0.45),
+    clip: { type: 'rect', x: -r, y: s > 0 ? -r : -shown, w: Wb, h: shown + r, rx },
+  })
 }
 
 export interface LongHoldBodyOptions {

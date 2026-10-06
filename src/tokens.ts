@@ -81,7 +81,7 @@ export const tokens = {
     hair: 0.022,
     /** hold progress ring */
     progress: 0.07,
-    /** hold body width (Cytoid HoldLine: 0.56 × 1.133 world / 2.235 click ≈ 0.284) */
+    /** hold body width (Cytoid HoldLine: 0.56 × 1.133 world / 2.235 click ≈ 0.284; Cytus II default skin ≈ 0.31) */
     holdBody: 0.284,
     /** drag connection width (Cytoid DragLine: 0.16 world / 2.235 click) */
     dragLine: 0.0716,
