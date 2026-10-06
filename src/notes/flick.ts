@@ -2,17 +2,20 @@
  * FLICK (1.125) — diamond + two outward chevrons.
  *
  * Enter:
- *  0.00–0.45  diamond outline draws itself (4 edges grow from the vertices), scale 0.6 → 1
+ *  0.00–0.45  diamond outline draws itself (4 edges grow from the vertices)
  *  0.25–0.94  shade split + late (ease-in) core, as Click; 0.86–0.89 + 0.92–1 double blink
  *  0.00–0.45  chevrons slide in ease-out and settle
  *  0.70–1.00  a fainter approach chevron pair converges linearly onto them (Click's approach ring)
+ *  0.00–1.00  the diamond body plays Click's fitted S-curve (`tokens.sizeCurve.click` —
+ *             after Cytus II's flick, whose own curve shrinks and swaps to a
+ *             larger white hit diamond on the final frame)
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { tokens } from '../tokens'
-import { blinkAmount, CLICK_TIMING, CORE_MAX, coreGrowth, splitShades } from './click'
+import { blinkAmount, CLICK_TIMING, clickSize, CORE_MAX, coreGrowth, splitShades } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { diamond, flickChevron } from './parts'
 
@@ -49,7 +52,6 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const inner = rv - W * 1.1
   const a = outCubic(seg(p, 0, 0.12))
   const build = outQuart(seg(p, 0, 0.45))
-  const scale = lerp(0.6, 1, outCubic(seg(p, 0, 0.55)))
 
   const near = R * 0.98 + W * 0.6
   const far = near + ctx.unit * 0.95
@@ -80,7 +82,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     // centre slit: flat nod to Cytoid's split-diamond flick fill
     { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, 0.05, 0.45)) },
     buildingDiamond(rv, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, build),
-  ].filter(Boolean) as SceneNode[], { transform: { scale } })
+  ].filter(Boolean) as SceneNode[], { transform: { scale: clickSize(p) } })
 
   return group([approach, arrows, body].filter(Boolean) as SceneNode[], { opacity: a })
 }
@@ -92,7 +94,7 @@ export const flick: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: flickEnter,
-    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click); chevrons settle by p = 0.45, a fainter approach pair converges onto them over the last 30 %.',
+    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click) on Click\'s fitted size curve; chevrons settle by p = 0.45, a fainter approach pair converges onto them over the last 30 %.',
   },
   clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),

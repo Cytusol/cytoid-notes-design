@@ -18,7 +18,8 @@ import {
   tone,
   toSVG,
 } from '../src'
-import { WAKE } from '../src/notes/click'
+import { clickSize } from '../src/notes/click'
+import { dragChildSize, dragHeadSize } from '../src/notes/drag'
 
 describe('color', () => {
   it('round-trips hex through oklch', () => {
@@ -93,12 +94,57 @@ describe('designs', () => {
     }
   })
 
-  it('drag series reach a steady shape early and a steady pose after waking', () => {
-    for (const kind of ['drag-head', 'drag-child', 'click-drag-child'] as const) {
+  it('fitted size curves: growing mid-approach, peak above the hit pose, exact landing', () => {
+    // click & flick peak at p 0.878 (+12 %), drag family at p 0.766 (+11 % / +6 %)
+    const peaks = [
+      ['click', 0.878],
+      ['flick', 0.878],
+      ['click-drag-head', 0.878],
+      ['drag-head', 0.766],
+      ['drag-child', 0.766],
+      ['click-drag-child', 0.766],
+    ] as const
+    for (const [kind, peak] of peaks) {
       const ctx = createContext(kind)
       const draw = designs[kind].enter.draw
-      expect(bounds(draw(0.25, ctx)), kind).toEqual(bounds(draw(1, ctx)))
-      expect(toSVG(draw(WAKE.to, ctx)), kind).toBe(toSVG(draw(1, ctx)))
+      // growing mid-approach (body; flick excluded — its far-out chevrons dominate the bounds)
+      if (kind !== 'flick')
+        expect(bounds(draw(0.25, ctx))![2], kind).toBeLessThan(bounds(draw(1, ctx))![2])
+      const big = bounds(draw(peak, ctx))!
+      const hit = bounds(draw(1, ctx))!
+      expect(big[0], kind).toBeLessThan(hit[0])
+      expect(big[2], kind).toBeGreaterThan(hit[2])
+    }
+    // settled on the exact hit-pose size before p = 1 (click/flick from 0.976, drag from 0.87);
+    // the click's approach ring/blink still run until p = 1, so assert on the curve there
+    expect(clickSize(0.98)).toBe(1)
+    expect(clickSize(1)).toBe(1)
+    const drag = createContext('drag-head')
+    expect(toSVG(designs['drag-head'].enter.draw(0.9, drag))).toBe(toSVG(designs['drag-head'].enter.draw(1, drag)))
+  })
+
+  it('size curves: one smooth sweep up, one settle — no wobble, exact landing', () => {
+    const curves = [
+      ['click', clickSize, 0.878, 1.121],
+      ['flick', clickSize, 0.878, 1.121],
+      ['drag-head', dragHeadSize, 0.766, 1.109],
+      ['drag-child', dragChildSize, 0.766, 1.059],
+    ] as const
+    for (const [name, size, peakP, peak] of curves) {
+      let prev = 0
+      for (let p = 0; p <= peakP; p += 0.005) {
+        const v = size(p)
+        expect(v, `${name} rising at p=${p.toFixed(3)}`).toBeGreaterThanOrEqual(prev - 1e-9)
+        prev = v
+      }
+      expect(size(peakP), `${name} peak`).toBeCloseTo(peak, 6)
+      prev = size(peakP)
+      for (let p = peakP; p <= 1; p += 0.005) {
+        const v = size(p)
+        expect(v, `${name} settling at p=${p.toFixed(3)}`).toBeLessThanOrEqual(prev + 1e-9)
+        prev = v
+      }
+      expect(size(1), `${name} hit pose`).toBe(1)
     }
   })
 

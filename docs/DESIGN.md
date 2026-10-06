@@ -7,8 +7,8 @@
 1. **Strictly flat**: solid fills and strokes only. No gradients, glows, noise or textures — only a little opacity. Every animation is built from translation, scale, stroke width and opacity of geometric primitives (circle, arc, rectangle, polygon, line segment).
 2. **Keep Cytoid's identity**: round notes, white outer ring, two-ring hold, diamond flick, arrowed drag head, solid-circle drag child, static capsule drop, white dashed drag line, and scan-direction colouring all stay. Sizes follow measured *visible* bodies (see §2) rather than Cytoid's transform ratios.
 3. **Timing cues only where needed**:
-   - Click and Flick are played on the beat. Their timing feedback follows Cytus II's structure: a calm pre-roll, an accelerating finish, and a blink right before the judgement. Linear growth only says "still early"; acceleration, convergence and blinking say "now".
-   - Holds can be pressed early and the drag family only follows a path. They reach a steady shape as fast as possible, then stay still and offer no timing read-out.
+   - Click and Flick are played on the beat. Their timing feedback follows Cytus II's structure: a calm (dim, small) pre-roll, an accelerating finish, and a blink right before the judgement. Linear growth only says "still early"; acceleration, convergence and blinking say "now". Cytus II also never stops growing its size until the very end — the body crosses its final size at p ≈ 0.74–0.78, decelerates into a +6…12 % overshoot peak and settles back. The whole size flow is one clean motion per kind (**one slow-fast-slow S-curve** up to the overshoot peak, then one S settle — `tokens.sizeCurve`, analytic cubic-bezier(0.7, 0, 0.75, 1) fitted to the measured frames): anchors (spawn size, peak timing/amount, exact hit pose at p = 1) are preserved, while the source's pixel-quantisation staircase and single-frame texture pops are deliberately not reproduced (individual noisy frames may deviate up to ≈ 0.1·R mid-approach). Hold is excluded: Cytus II holds shrink slowly all the way, which here is the progress ring's job.
+   - Holds can be pressed early and the drag family only follows a path. They offer no timing read-out: the wake (p 0.45–0.7) is colour-only and the ring/arrow/glyph assemble by p 0.2; the size curve still plays (as in Cytus II), but nothing on the note tracks the beat.
    - **Page cue (dim → lit)**: like Cytus II, every timed note spends the first half of its approach 200 shade steps darker and only lights up to its true colour in the second half. Notes still on the next page therefore read dimmer than the ones about to be played; the direction colours (blue/red) are not what separates the pages. Click/Flick do it through the shade split, holds and the drag family through the `WAKE` window (p 0.45–0.7, colour only, shape unchanged).
 4. **Restrained external hints**: decorations outside the note (the lock ticks, the corner brackets) are peripheral only — low opacity, small displacement, never competing with chart reading.
 5. **Shape over colour**: every note has a distinct silhouette so colour-blind players can tell them apart by shape alone:
@@ -81,11 +81,12 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - the colour progression runs 0.25–0.85 (ease-out) and the core fades in with the divergence (stacking a translucent same-colour core during the fade would paint a brighter dot at the centre);
   - the spawn sits at 700 (L≈0.47 for the defaults; 800 L≈0.39, 400 L≈0.70) — darker than the measured Cytus II spawn ball (L 0.53, ≈ 600) so the start reads clearly dim. As in Cytus II the base then sinks to L 0.39 and the core rises to 0.70 — a lightness gap of ≈ 0.3 at the hit. (An earlier round halved this gap; players then could only read timing from the scan line.)
 - **Timing feedback**: modelled frame-by-frame on Cytus II's click (41 frames). The original: a dim ball with a tiny core for the first half; the core grows mostly in the second half (0.16R at p 0.44 → 0.65R at p 0.93, accelerating); from p≈0.73 a white concentric ring (α≈0.5, ≈0.08R thick) converges linearly from 1.74R onto the ring; a near-white flash at p≈0.95. The flat equivalent:
-  - 0–0.1 fade in; 0–0.5 global scale 0.62→1; 0–0.4 the outer ring assembles from 3 arcs. This is the calm pre-roll.
+  - 0–0.1 fade in; 0–0.4 the outer ring assembles from 3 arcs. The size is not hand-timed at all — see the fitted curve below.
   - 0.42–0.94 the core grows from a dot (0.24) to 0.8× the inner radius with **ease-in (quad)** — most of the growth lands in the last third. At the hit the core is the true colour with an 800 rim left around it.
   - 0.7–1 a white **approach ring** converges from 1.83R onto the ring **linearly in time**, 1.5–2.1× the hairline thick, up to 0.5 opacity (Cytus II's weight); the linear motion keeps the speed readable.
   - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6, ring thickened 25%), forming a double-blink rhythm;
   - 0.92–1 the **final blink**: the core flashes white (up to α 0.6) and the ring thickens 25%, settling exactly at p = 1.
+  - 0–1 the **fitted size curve** `tokens.sizeCurve.click` — one S-curve (cubic-bezier 0.7/0.75, fitted to the measured frames) from the small dim spawn at 0.32 across the full-size crossing (p ≈ 0.74) to the **+12 % peak at p 0.88** — together with the lead-in blink and the converging ring arriving — then one S settle, exactly 1.0 (the hit pose) from p 0.976. The flick shares this curve. The approach ring keeps its fixed linear path; at the peak the body edge still stays inside it.
 - **Click drag head**: identical timing to the click, with a white arrow over the core pointing at the next chain node (`heading`).
 
 ### Hold
@@ -116,7 +117,7 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 - **clear**: adds a vertical beam that extends ~3R up and down, then narrows and fades.
 
 ### Drag series (Drag head / Drag child / Click drag child)
-- Players only follow the path, so **the steady shape arrives at p = 0.2** and nothing moves afterwards. Only the fill wakes from 600 to 400 over p 0.45–0.7 (the page cue; the child’s hairline goes 800 → 600 with it).
+- Players only follow the path, so the ring, arrow and hairline **assemble by p = 0.2** and the wake (p 0.45–0.7) is colour-only — nothing on the note tracks the beat. The **size follows the fitted Cytus II S-curves** (`tokens.sizeCurve.dragHead` / `.dragChild`): spawn 0.29 / 0.26, one smooth growth into the **+11 % / +6 % peak at p 0.77**, settled back to exactly 1.0 from p 0.87 / 0.85. Only the fill wakes from 600 to 400 over p 0.45–0.7 (the page cue; the child’s hairline goes 800 → 600 with it).
 - **Drag head**: white ring, full fill, plus a **white arrow** pointing along the chain (Cytoid's CDragFill shape).
   - The arrow angle comes from `createContext(..., { heading })`: 0 points up, clockwise positive.
   - Frames are baked arrow-up; rotate the whole sprite in use — the round body is rotationally symmetric, so rotation is invisible on it.
@@ -129,7 +130,7 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - `lead` grows from the source note's entry window; `trail` retracts from the source as the scan line passes.
 
 ### Flick
-- **Structure**: a diamond outline, diamond base and diamond core (the same shade split as the click), plus a centre vertical slit (600). The side chevrons open at 90°. The slit is a flat nod to Cytoid's split diamond. The core shares the click's timing language: dim pre-roll, late ease-in growth and a double blink (0.86–0.89 + 0.92–1).
+- **Structure**: a diamond outline, diamond base and diamond core (the same shade split as the click), plus a centre vertical slit (600). The side chevrons open at 90°. The slit is a flat nod to Cytoid's split diamond. The core shares the click's timing language: dim pre-roll, late ease-in growth and a double blink (0.86–0.89 + 0.92–1), and the diamond body plays **Click's fitted size curve** (`CLICK_SIZE`; Cytus II's own flick curve instead shrinks steadily and swaps to a larger white hit diamond on the final frame). The chevrons do not scale with it: they sit far enough outside the swollen diamond.
 - **Entry**:
   - 0–0.45 the diamond's four edges grow from their midpoints;
   - the centre slit appears with the core: its length follows the core's ease-out growth, opacity easing out over 0.05–0.45;

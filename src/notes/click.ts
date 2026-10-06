@@ -7,7 +7,12 @@
  * blink right before the hit.
  *
  *  0.00–0.10  fade in
- *  0.00–0.50  note scales 0.62 → 1, ring assembles from 3 arcs (0–0.40)
+ *  0.00–1.00  size follows the fitted Cytus II S-curve (`tokens.sizeCurve.click`):
+ *             a small dim spawn (0.32), one smooth slow-fast-slow growth into a
+ *             +12 % peak at p 0.88 — together with the lead-in blink and the
+ *             converging ring — then a smooth settle, exactly 1.0 (the hit
+ *             pose) from p 0.976
+ *  0.00–0.10  fade in; 0–0.40 the outer ring assembles from 3 arcs
  *  0.25–0.85  shade split: core rises 700 → 400 (true colour), background sinks 700 → 800
  *             (full, uncompressed contrast — ΔL ≈ 0.3 at the hit, as Cytus II)
  *  0.42–0.94  core grows ease-in from a small dot to 0.8·inner — most of the
@@ -20,7 +25,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { bump, inOutQuad, inQuad, lerp, outCubic, outQuad, outQuart, seg, TAU } from '../core/ease'
+import { bump, inOutQuad, inQuad, lerp, outCubic, outQuad, outQuart, riseSettleCurve, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tone } from '../palette'
 import { tokens } from '../tokens'
@@ -56,6 +61,17 @@ export function blinkAmount(p: number): number {
     bump(p, CLICK_TIMING.blinkFrom, 1),
   )
 }
+
+/**
+ * Enter size at progress `p` (1 = hit pose): one fitted S-curve carries the
+ * ball from the small dim spawn (0.32) up through the full-size crossing
+ * (p ≈ 0.74) to the +12 % overshoot peak at p 0.878 — together with the
+ * lead-in blink and the converging ring — and a second S settles it back to
+ * exactly 1.0 by p 0.976. Anchors and shape are fitted to the measured Cytus
+ * II frames (`tokens.sizeCurve`); the source's pixel staircase and texture
+ * pops are not reproduced. The flick shares this curve.
+ */
+export const clickSize = riseSettleCurve(tokens.sizeCurve.click, tokens.sizeCurve.s)
 
 /** Click/Flick spawn shade: the whole ball starts here before the split. */
 export const SPAWN_SHADE = 700
@@ -109,7 +125,7 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const inner = R - W
   const a = outCubic(seg(p, 0, 0.1))
   const build = outQuart(seg(p, 0, 0.4))
-  const scale = lerp(0.62, 1, outCubic(seg(p, 0, 0.5)))
+  const scale = clickSize(p)
 
   // the core stops at 0.8·inner: a rim of the note colour stays visible at the hit (hue identity)
   const coreR = inner * CORE_MAX * coreGrowth(p)
@@ -153,7 +169,7 @@ export const click: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: (p, ctx) => clickEnter(p, ctx),
-    note: 'Dim pre-roll, then the core swells late (ease-in) on full shade contrast; approach ring converges linearly over the last 30 %, double blink before the hit.',
+    note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +12 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %.',
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, seed: 1 }),
   miss: makeMissClip('circle'),

@@ -93,6 +93,23 @@ export const tokens = {
     clear: { perfect: 0.42, great: 0.46, good: 0.52, bad: 0.56, miss: 0.5 } satisfies Record<Grade, number>,
   },
 
+  /**
+   * Fitted enter-size curves (Cytus II, measured): one S-curve carries the
+   * body from the small `spawn` to the overshoot `peak` (at `peakP`, synced
+   * with the lead-in blink), a second S settles it back to exactly 1 — the
+   * hit pose — by `settleP`. Both phases share the `s` shape (cubic-bezier
+   * x1/x2, fitted to the measured frames; the source's pixel staircase and
+   * single-frame texture pops are deliberately not reproduced). Hold is
+   * excluded: Cytus II holds shrink slowly all the way, which here is the
+   * progress ring's job.
+   */
+  sizeCurve: {
+    s: [0.7, 0.75],
+    click: { spawn: 0.319, peak: 1.121, peakP: 0.878, settleP: 0.976 },
+    dragHead: { spawn: 0.293, peak: 1.109, peakP: 0.766, settleP: 0.872 },
+    dragChild: { spawn: 0.259, peak: 1.059, peakP: 0.766, settleP: 0.851 },
+  },
+
   /** Judgement colours — Cytoid defaults. */
   grade: {
     perfect: '#5BC0EB',
