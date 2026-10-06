@@ -16,7 +16,7 @@ import { lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { ringTone } from '../palette'
 import { tokens } from '../tokens'
-import { blinkAmount, CLICK_TIMING, clickSize, CORE_MAX, coreGrowth, splitShades } from './click'
+import { BLINK_PEAK, blinkAmount, CLICK_TIMING, clickSize, CORE_MAX, coreGrowth, splitShades } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { diamond, flickChevron } from './parts'
 
@@ -92,7 +92,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     diamond(inner + W * 0.15, { fill: split.base }),
     // fades in with the shade split (same stacking artifact as the click core otherwise)
     split.k > 0 ? diamond(inner * CORE_MAX * g, { fill: split.core, opacity: split.k }) : null,
-    blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
+    blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: BLINK_PEAK * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
     { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, CLICK_TIMING.splitFrom, 0.75)) },
     buildingDiamond(rv, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), build, { color: tokens.edge, fraction: tokens.stroke.edge }),

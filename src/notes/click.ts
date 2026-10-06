@@ -80,6 +80,9 @@ export const clickSize = riseSettleCurve(tokens.sizeCurve.click, tokens.sizeCurv
 /** Click/Flick spawn shade: the whole ball starts here before the split. */
 export const SPAWN_SHADE = 700
 
+/** Peak opacity of the pre-hit flash (neutral material over the core). */
+export const BLINK_PEAK = 0.3
+
 /**
  * Shade progression on the palette scale (`tone`): everything starts at SPAWN_SHADE (700);
  * as the hit approaches the core rises 700 → 400 (the true colour) while the
@@ -154,7 +157,7 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     // the core only appears once the split starts (0.4): before that the ball
     // reads as one flat disc — the deferred differentiation is the point
     split.k > 0 ? disk(coreR, split.core, split.k) : null,
-    blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
+    blink > 0 ? disk(coreR, ctx.palette.ring, BLINK_PEAK * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
     assemblingRing(R - W / 2, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), 3, build, lerp(-TAU / 6, 0, build), 1, { color: tokens.edge, fraction: tokens.stroke.edge }),
   ].filter(Boolean) as SceneNode[], { transform: { scale } })
