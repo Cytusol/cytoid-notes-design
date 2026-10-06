@@ -4,11 +4,12 @@
  * Enter:
  *  0.00–0.45  diamond outline draws itself (4 edges grow from the vertices)
  *  0.25–0.94  shade split + late (ease-in) core, as Click; 0.86–0.89 + 0.92–1 double blink
- *  0.00–0.88  chevrons ride the body's S-curve (`riseSettleCurve`): the
- *             flight overshoots ~13 % past rest (deepest ~p 0.5, just after
- *             the old stop point) and the relax back spans the diamond's
- *             whole growth, so the body–arrow gap only ever closes — the
- *             pairs sit locked from 0.875 through the hit
+ *  0.25–0.88  chevrons dash in on the body's S-curve (`riseSettleCurve`):
+ *             a short 0.30u flight over 0.25–0.5, overshooting ~16 px past
+ *             rest (deepest ~p 0.5, just after the old stop point); the
+ *             relax back spans the diamond's whole growth, so the
+ *             body–arrow gap only ever closes — the pairs sit locked
+ *             from 0.875 through the hit
  *  0.70–1.00  a fainter approach chevron pair converges linearly onto them (Click's approach ring)
  *  0.00–1.00  the diamond body plays Click's fitted S-curve (`tokens.sizeCurve.click` —
  *             after Cytus II's flick, whose own curve shrinks and swaps to a
@@ -16,7 +17,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { lerp, outCubic, outQuart, riseSettleCurve, seg } from '../core/ease'
+import { cubicBezier, lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
 import { ringTone } from '../palette'
 import { tokens } from '../tokens'
@@ -25,18 +26,28 @@ import { makeClearClips, makeMissClip } from './effects'
 import { diamond, flickChevron } from './parts'
 
 /**
- * Travel curve of the side arrows: the body's own S-curve language
- * (`tokens.sizeCurve.s`) — the flight carries them ~13 % past rest (deepest
- * at p 0.5, just after the old 0.45 stop point) and the relax back spans
- * the diamond's whole growth (settled by p 0.875): the body swells ~2.5×
- * faster than the arrows retreat, so the visual body–arrow gap only ever
- * closes while they return. From 0.875 on they sit locked in the rest pose
- * through the body's own hit-pose settle.
+ * Flight window of the side arrows: a delayed, short 0.30u dash over
+ *  0.25–0.5; the slow S-curve ramp happens mostly before the fade-in
+ *  (0.32–0.45).
  */
-const arrowTravel = riseSettleCurve(
-  { spawn: 0, peak: 1.13, peakP: 0.5, settleP: 0.875 },
-  tokens.sizeCurve.s,
-)
+const ARROW_FROM = 0.25
+/**
+ * Same rise–settle language as the body (`tokens.sizeCurve.s`), anchored to
+ *  the arrow's own windows: rise 0.25–0.5 to ~16 px past rest (peak fraction
+ *  1.42 over the short 0.30u travel — same deepest point as ever), relax
+ *  0.5–0.875 spanning the diamond's growth, so the body swells faster than
+ *  the arrows retreat and the gap only closes; locked from 0.875.
+ */
+const ARROW_SHAPE = cubicBezier(tokens.sizeCurve.s[0], 0, tokens.sizeCurve.s[1], 1)
+function arrowTravel(p: number): number {
+  if (p < ARROW_FROM)
+    return 0
+  if (p < 0.5)
+    return lerp(0, 1.42, ARROW_SHAPE(seg(p, ARROW_FROM, 0.5)))
+  if (p < 0.875)
+    return lerp(1.42, 1, ARROW_SHAPE(seg(p, 0.5, 0.875)))
+  return 1
+}
 
 function flickArrow(size: number, width: number, color: string): SceneNode {
   // ">" pointing right, 90° like the diamond corner
@@ -82,11 +93,11 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const build = outQuart(seg(p, 0, 0.45))
 
   const near = R * 0.98 + W * 0.6
-  const far = near + ctx.unit * 0.95
-  // S-curve flight with a deep overshoot inside the old stop point (see `arrowTravel`)
+  const far = near + ctx.unit * 0.3
+  // delayed half-length dash at full speed (see `arrowTravel`, `ARROW_FROM`)
   const x = lerp(far, near, arrowTravel(p))
   const arrowSize = R * 0.62
-  const arrowOpacity = outCubic(seg(p, 0, 0.35))
+  const arrowOpacity = outCubic(seg(p, 0.32, 0.45))
   const pair = (px: number, width: number, color: string) => [
     group([flickArrow(arrowSize, width, color)], { transform: { x: px } }),
     group([flickArrow(arrowSize, width, color)], { transform: { x: -px, rotate: Math.PI } }),
@@ -124,7 +135,7 @@ export const flick: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: flickEnter,
-    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click) on Click\'s fitted size curve; chevrons fly in on the body\'s rise–settle S-curve, overshooting ~13 % past rest (deepest ~p 0.5) and relaxing back across the diamond\'s growth so the body–arrow gap only closes; locked from p 0.875. Outline and chevrons wake neutral 400 → 50 with the split.',
+    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click) on Click\'s fitted size curve; chevrons dash in late (fade 0.32–0.45) on a short 0.30u flight over 0.25–0.5, overshooting ~16 px past rest (deepest ~p 0.5) and relaxing back across the diamond\'s growth so the body–arrow gap only closes; locked from p 0.875. Outline and chevrons wake neutral 400 → 50 with the split.',
   },
   clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),
