@@ -133,7 +133,7 @@ async function bakeBodies(ctx: DrawContext, dir: string, rel: string, only: (nam
     await writeFile(join(dir, file), rasterize(node, w, h, ox, oy))
     out[name] = { file, width: w, height: h, repeat, note }
   }
-  const hctx = { ...ctx, direction: 'down' as Direction }
+  const hctx: DrawContext = { ...ctx, bodyDirection: 'down' }
   await put('hold-track', holdBody({ length: tile * 4, progress: 0, appear: 0.999 }, hctx), Wb, tile, Wb / 2, 0, 'y', 'Unheld hold body; tile vertically. Scroll V by t·4·width for the conveyor.')
   await put('hold-done', holdBody({ length: tile * 4, progress: 1, appear: 0.999 }, hctx), Wb, tile, Wb / 2, 0, 'y', 'Completed hold body; tile vertically, mask by progress.')
   const capH = Math.ceil(ctx.unit * tokens.stroke.hair * 3.2) + 2
