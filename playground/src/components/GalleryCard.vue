@@ -59,7 +59,7 @@ function paintDragChain(ctx: CanvasRenderingContext2D, width: number, height: nu
       drawScene(ctx, line)
   }
   const focus = focusHead ? 0 : 1
-  for (let i = 0; i < 3; i++) {
+  const drawNode = (i: number) => {
     const n = nodes[i]!
     const kind = kinds[i]!
     const hit = hits[i]!
@@ -72,30 +72,38 @@ function paintDragChain(ctx: CanvasRenderingContext2D, width: number, height: nu
       if (p > 0)
         drawScene(ctx, renderNote(kind, { phase: 'enter', p }, createContext(kind, { ...base, heading: headingTo(n, nodes[i + 1] ?? n) }), { judgement: false }))
     }
-    else {
-      // the head sprite keeps sliding along the chain (a missed head stops it);
-      // drawn under the following node's burst, exactly like the chart
-      if (i === 0 && review.grade !== 'miss' && t < hits[2]!) {
+    else if (t - hit <= clearDur) {
+      const since = t - hit
+      const burst = review.grade === 'miss' ? { phase: 'miss' as const, t: since } : { phase: 'clear' as const, grade: review.grade, t: since }
+      drawScene(ctx, renderNote(kind, burst, createContext(kind, base), { judgement: review.judgement }))
+    }
+    ctx.restore()
+  }
+  // the head sprite slides along the chain after its hit (a missed head stops
+  // it); Cytoid paints earlier chain notes above later ones, so it rides on top
+  // of the node it is approaching — only its own trigger burst sits above it
+  const follow = t >= hits[0]! && t < hits[2]! && review.grade !== 'miss'
+    ? (() => {
         const seg = t < hits[1]! ? 0 : 1
         const a = nodes[seg]!
         const b = nodes[seg + 1]!
         const alpha = (t - hits[seg]!) / (hits[seg + 1]! - hits[seg]!)
-        const followKind = click ? 'drag-head' as const : headKind
+        const followKind: NoteKind = click ? 'drag-head' : headKind
         const followCtx = click
           ? { ...createContext(followKind, { ...base, heading: headingTo(a, b) }), palette: palette.value.family('click', review.direction) }
           : createContext(followKind, { ...base, heading: headingTo(a, b) })
-        ctx.save()
-        ctx.translate(a.x + (b.x - a.x) * alpha - n.x, a.y + (b.y - a.y) * alpha - n.y)
-        drawScene(ctx, renderNote(followKind, { phase: 'enter', p: 1 }, followCtx, { judgement: false }))
-        ctx.restore()
-      }
-      const since = t - hit
-      const burst = review.grade === 'miss' ? { phase: 'miss' as const, t: since } : { phase: 'clear' as const, grade: review.grade, t: since }
-      if (since <= clearDur)
-        drawScene(ctx, renderNote(kind, burst, createContext(kind, base), { judgement: review.judgement }))
-    }
+        return { x: a.x + (b.x - a.x) * alpha, y: a.y + (b.y - a.y) * alpha, kind: followKind, ctx: followCtx }
+      })()
+    : null
+  drawNode(1)
+  drawNode(2)
+  if (follow) {
+    ctx.save()
+    ctx.translate(follow.x, follow.y)
+    drawScene(ctx, renderNote(follow.kind, { phase: 'enter', p: 1 }, follow.ctx, { judgement: false }))
     ctx.restore()
   }
+  drawNode(0)
   // the scanline sweeps straight through, judging each node as it passes
   const scanY = step * near * (t / 1.5 - 1)
   if (Math.abs(scanY) <= height / 2 + 3)
