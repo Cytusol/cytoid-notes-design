@@ -145,10 +145,11 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const blink = blinkAmount(p)
   const split = splitShades(p, ctx)
 
-  // approach ring: linear in time so its speed is readable, Cytus II weight
+  // approach ring: linear in time so its speed is readable; hairline weight —
+  // Cytus II's band reads as a hairline once its bloom glow is discounted
   const ap = seg(p, CLICK_TIMING.approachFrom, 1)
   const approach = ap > 0 && ap < 1
-    ? ring(lerp(R * 1.83, R - W / 2, ap), hair * lerp(1.5, 2.1, ap), ctx.palette.ring, 0.5 * seg(ap, 0, 0.15))
+    ? ring(lerp(R * 1.83, R - W / 2, ap), hair * lerp(0.375, 0.525, ap), ctx.palette.ring, 0.5 * seg(ap, 0, 0.15))
     : null
 
   const body = group([
