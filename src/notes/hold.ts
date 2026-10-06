@@ -6,6 +6,11 @@
  * click: a borderless dark core (at Cytoid HoldNoteRing's inner-ring radius)
  * with a static centre glyph — a circle (hold) or a square (long hold, +
  * corner brackets).
+ *
+ * Entry mirrors the click depth language: the head spawns as one deep ball
+ * (depth 2), then the core sinks 2 → 1 while contracting onto the inner ring
+ * as the background rises 2 → 3 (fill); the depth-1 end uses click's
+ * DEPTH_CONTRAST-compressed stop. Steady by p ≈ 0.35.
  * No arrows: arrows would suggest dragging.
  *
  * Holding is split into independent layers (frame-friendly), composed as
@@ -17,10 +22,10 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { inOutCubic, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { inOutCubic, inOutQuad, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tokens } from '../tokens'
-import { ringWidth } from './click'
+import { compressedStops, depthSplit, ringWidth } from './click'
 import { makeClearClips, makeMissClip } from './effects'
 import { arc, assemblingRing, disk, ring } from './parts'
 
@@ -43,18 +48,25 @@ function glyphShape(long: boolean, r: number, width: number, color: string, opac
 const INNER_RING = 0.55
 const GLYPH = 0.2
 
-/** Steady-state head; `k` = build progress 0..1 (fast), `glyph` = centre glyph reveal. */
-function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number): SceneNode {
+/**
+ * Head; `k` = build progress 0..1 (fast), `glyph` = centre glyph reveal,
+ * `split` = depth split 0..1 (steady poses use the default 1).
+ */
+function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number, split = 1): SceneNode {
   const R = ctx.size / 2
   const W = ringWidth(ctx)
   const inner = R - W
   // dark core at Cytoid HoldNoteRing's inner-ring radius — no border
   const innerRingR = R * INNER_RING
   const gw = ctx.unit * tokens.stroke.hair * 1.6
+  // depth-2 split (click's ramp, roles mirrored): the ball rises to fill, the
+  // core sinks to the compressed track stop while contracting onto the inner ring
+  const { d1 } = compressedStops(ctx)
+  const { up, down } = depthSplit(split, ctx.palette.fill, ctx.palette.deep, d1)
   return group([
-    disk(inner + 0.5, ctx.palette.fill, k),
-    // dark core inside the inner ring (two-tone, as in the first prototype)
-    disk(innerRingR * outCubic(k), ctx.palette.deep),
+    // solid ball from the first frame
+    disk(inner + 0.5, up),
+    disk(lerp(inner + 0.5, innerRingR, split), down),
     glyph > 0 ? group([glyphShape(long, R * GLYPH, gw, ctx.palette.ring)], { opacity: seg(glyph, 0, 0.5), transform: { scale: lerp(0.4, 1, outBack(glyph, 2)) } }) : null,
     assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ctx.palette.ring, 2, outQuart(k), lerp(-TAU / 4, 0, k)),
   ].filter(Boolean) as SceneNode[])
@@ -87,7 +99,9 @@ function holdEnter(long: boolean) {
     // steady by p = 0.35 — no timing to read on a hold head
     const k = outCubic(seg(p, 0, 0.35))
     const glyph = seg(p, 0.2, 0.42)
-    const head = holdHead(ctx, long, k, glyph)
+    // split starts after the fade-in (0.08) and lands with the steady pose (0.35)
+    const split = inOutQuad(seg(p, 0.08, 0.35))
+    const head = holdHead(ctx, long, k, glyph, split)
     const extra = long ? brackets(R, inOutCubic(seg(p, 0.1, 0.45)), ctx, seg(p, 0.1, 0.25)) : null
     return group([extra, head], { opacity: seg(p, 0, 0.08), transform: { scale: lerp(0.7, 1, k) } })
   }
@@ -122,10 +136,12 @@ function holdLoop(long: boolean) {
     const w = (u * 2) % 1
     const k = outCubic(seg(w, 0, 0.75))
     const coreR = R * PRESSED * INNER_RING
+    // copy of the core disc — same DEPTH_CONTRAST-compressed track stop
+    const coreColour = compressedStops(ctx).d1
     // clipped to the head interior so the ping never dims the white ring
     const innerPressed = (R - ringWidth(ctx)) * PRESSED
     const ping = w < 0.75
-      ? group([disk(coreR * lerp(1, 2, k), ctx.palette.deep, 0.8 * (1 - k))], { clip: { type: 'circle', r: innerPressed } })
+      ? group([disk(coreR * lerp(1, 2, k), coreColour, 0.8 * (1 - k))], { clip: { type: 'circle', r: innerPressed } })
       : null
     const glyph = glyphShape(long, R * PRESSED * GLYPH, ctx.unit * tokens.stroke.hair * 1.6 * PRESSED, ctx.palette.ring)
     const ripples: SceneNode[] = []
@@ -161,8 +177,8 @@ function makeHold(long: boolean): NoteDesign {
       duration: tokens.time.enter,
       draw: holdEnter(long),
       note: long
-        ? 'Steady fast (no timing to read). Thick ring + borderless dark core + square glyph + corner brackets.'
-        : 'Steady fast (no timing to read). Thick ring + borderless dark core + circle glyph.',
+        ? 'Steady fast (no timing to read). Deep ball splits: core sinks to track on the inner ring, ball rises to fill; square glyph + corner brackets.'
+        : 'Steady fast (no timing to read). Deep ball splits: core sinks to track on the inner ring, ball rises to fill; circle glyph.',
     },
     hold: {
       press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86; the centre glyph stays.' },

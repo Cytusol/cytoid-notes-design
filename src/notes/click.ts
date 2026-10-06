@@ -70,11 +70,30 @@ function stepToward(anchor: string, colour: string, k: number): string {
   return oklch(a.l + (c.l - a.l) * k, c.c, c.h)
 }
 
+/**
+ * The depth-2 split ramp shared by the click and hold heads: everything starts
+ * at depth 2; `k` walks `up` to depth 3 and `down` to depth 1 (sRGB mix).
+ * Both callers pass the DEPTH_CONTRAST-compressed depth stops (see below);
+ * hold keeps its raw depth-2 spawn ball and only compresses the depth-1 end.
+ */
+export function depthSplit(k: number, depth3: string, depth2: string, depth1: string) {
+  return { up: mix(depth2, depth3, k), down: mix(depth2, depth1, k) }
+}
+
+/** DEPTH_CONTRAST-compressed depth stops (depth 3 stays the raw fill). */
+export function compressedStops(ctx: DrawContext) {
+  return {
+    d2: stepToward(ctx.palette.fill, ctx.palette.deep, DEPTH_CONTRAST),
+    d1: stepToward(ctx.palette.fill, ctx.palette.track, DEPTH_CONTRAST),
+  }
+}
+
 export function depthColors(p: number, ctx: DrawContext) {
   const k = inOutQuad(seg(p, 0.1, CLICK_TIMING.coreFull))
-  const deep = stepToward(ctx.palette.fill, ctx.palette.deep, DEPTH_CONTRAST)
-  const track = stepToward(ctx.palette.fill, ctx.palette.track, DEPTH_CONTRAST)
-  return { base: mix(deep, track, k), core: mix(deep, ctx.palette.fill, k), k }
+  const { d2, d1 } = compressedStops(ctx)
+  // core rises 2 → 3, background sinks 2 → 1 (the hit pose shows the true colour)
+  const { up, down } = depthSplit(k, ctx.palette.fill, d2, d1)
+  return { base: down, core: up, k }
 }
 
 export interface ClickOptions {
