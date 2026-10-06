@@ -7,7 +7,7 @@
  * shades wake WAKE_DROP steps up (600 → 400) on the palette scale over the
  * click's WAKE window (page cue).
  *
- * Drag head (0.8): white ring + full fill + white arrow pointing along the
+ * Drag head (0.8): neutral ring + full fill + matching arrow pointing along the
  *   chain (`ctx.heading`; frames are baked pointing up — rotate the sprite).
  * Drag child (0.65): solid bead, like Cytoid. Only a faint 600 hairline ring.
  * Click drag head: Click curve + the same arrow (see click.ts).
@@ -17,7 +17,7 @@ import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { lerp, outCubic, riseSettleCurve, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
-import { tone } from '../palette'
+import { ringTone, tone } from '../palette'
 import { tokens } from '../tokens'
 import { dragArrow, ringWidth, wakeAmount, wakeShade } from './click'
 import { makeClearClips, makeMissClip } from './effects'
@@ -38,10 +38,12 @@ function headDraw(p: number, ctx: DrawContext): SceneNode {
   const R = ctx.size / 2
   const W = ringWidth(ctx)
   const k = outCubic(seg(p, 0, STEADY))
+  const w = wakeAmount(p)
   return group([
-    disk(R - W + 0.5, tone(ctx.palette, wakeShade(400, wakeAmount(p)))),
-    dragArrow(ctx, (R - W) * 0.95, outCubic(seg(p, STEADY * 0.3, STEADY))),
-    assemblingRing(R - W / 2, W, ctx.palette.ring, 2, k, lerp(-TAU / 4, 0, k)),
+    disk(R - W + 0.5, tone(ctx.palette, wakeShade(400, w))),
+    dragArrow(ctx, (R - W) * 0.95, outCubic(seg(p, STEADY * 0.3, STEADY)), w),
+    // ring + arrow are white material: they wake neutral 400 → 50 with the page cue
+    assemblingRing(R - W / 2, W, ringTone(ctx.palette, w), 2, k, lerp(-TAU / 4, 0, k)),
   ].filter(Boolean) as SceneNode[], { opacity: seg(p, 0, 0.06), transform: { scale: dragHeadSize(p) } })
 }
 
@@ -51,7 +53,7 @@ export const dragHead: NoteDesign = {
     id: 'enter',
     mode: 'normalized',
     duration: tokens.time.enter,
-    note: 'Fitted Cytus II S-curve: small spawn, smooth growth into the +5 % peak at p 0.77, settled from p 0.87. Ring closes from 2 halves by p 0.2, white arrow along the chain (rotate by heading). Path matters, not timing.',
+    note: 'Fitted Cytus II S-curve: small spawn, smooth growth into the +5 % peak at p 0.77, settled from p 0.87. Ring closes from 2 halves by p 0.2, arrow along the chain (rotate by heading); ring + arrow wake neutral 400 → 50 over the WAKE window. Path matters, not timing.',
     draw: headDraw,
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.4, sectors: 24, seed: 5 }),

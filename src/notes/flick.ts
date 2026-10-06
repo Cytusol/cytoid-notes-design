@@ -14,6 +14,7 @@ import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { lerp, outCubic, outQuart, seg } from '../core/ease'
 import { group, regularPolygon } from '../core/scene'
+import { ringTone } from '../palette'
 import { tokens } from '../tokens'
 import { blinkAmount, CLICK_TIMING, clickSize, CORE_MAX, coreGrowth, splitShades } from './click'
 import { makeClearClips, makeMissClip } from './effects'
@@ -58,22 +59,23 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
   const x = lerp(far, near, outCubic(seg(p, 0, ARROW_SETTLE)))
   const arrowSize = R * 0.62
   const arrowOpacity = outCubic(seg(p, 0, 0.3))
-  const pair = (px: number, width: number) => [
-    group([flickArrow(arrowSize, width, ctx.palette.ring)], { transform: { x: px } }),
-    group([flickArrow(arrowSize, width, ctx.palette.ring)], { transform: { x: -px, rotate: Math.PI } }),
+  const pair = (px: number, width: number, color: string) => [
+    group([flickArrow(arrowSize, width, color)], { transform: { x: px } }),
+    group([flickArrow(arrowSize, width, color)], { transform: { x: -px, rotate: Math.PI } }),
   ]
-  const arrows = group(pair(x, W * 0.85), { opacity: arrowOpacity })
-  // approach chevrons (Cytus II's second chevron pair): the flick's approach
-  // ring — converge linearly onto the settled pair over the last 30 %
-  const ap = seg(p, CLICK_TIMING.approachFrom, 1)
-  const approach = ap > 0 && ap < 1
-    ? group(pair(lerp(near + ctx.unit * 0.35, near, ap), W * 0.6), { opacity: 0.5 * seg(ap, 0, 0.15) })
-    : null
-
   // same timing language as Click: dim pre-roll, the core swells late
   const g = coreGrowth(p)
   const blink = blinkAmount(p)
   const split = splitShades(p, ctx)
+  // the settled chevrons are note material: they ride the ring's neutral wake;
+  // the late approach pair is a timing gauge and stays at the resting tone
+  const arrows = group(pair(x, W * 0.85, ringTone(ctx.palette, split.k)), { opacity: arrowOpacity })
+  // approach chevrons (Cytus II's second chevron pair): the flick's approach
+  // ring — converge linearly onto the settled pair over the last 30 %
+  const ap = seg(p, CLICK_TIMING.approachFrom, 1)
+  const approach = ap > 0 && ap < 1
+    ? group(pair(lerp(near + ctx.unit * 0.35, near, ap), W * 0.6, ctx.palette.ring), { opacity: 0.5 * seg(ap, 0, 0.15) })
+    : null
   const body = group([
     diamond(inner + W * 0.15, { fill: split.base }),
     // fades in with the shade split (same stacking artifact as the click core otherwise)
@@ -81,7 +83,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
     { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, CLICK_TIMING.splitFrom, 0.75)) },
-    buildingDiamond(rv, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, build),
+    buildingDiamond(rv, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), build),
   ].filter(Boolean) as SceneNode[], { transform: { scale: clickSize(p) } })
 
   return group([approach, arrows, body].filter(Boolean) as SceneNode[], { opacity: a })
@@ -94,7 +96,7 @@ export const flick: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: flickEnter,
-    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click) on Click\'s fitted size curve; chevrons settle by p = 0.45, a fainter approach pair converges onto them over the last 30 %.',
+    note: 'Diamond outline grows from edge midpoints; dim pre-roll and late core with a double blink (as Click) on Click\'s fitted size curve; chevrons settle by p = 0.45, a fainter approach pair converges onto them over the last 30 %. Outline and chevrons wake neutral 400 → 50 with the split.',
   },
   clear: makeClearClips({ shape: 'diamond', reach: 1.4, sectors: 4, extra: 'streaks', seed: 2 }),
   miss: makeMissClip('diamond'),

@@ -174,6 +174,32 @@ export function tone(palette: NotePalette, step: number): string {
   return oklch(pa.l + (pb.l - pa.l) * k, pa.c + (pb.c - pa.c) * k, pa.h + dh * k)
 }
 
+/** Lightness of neutral 400 (oklch 0.708 0 0) — the ring's spawn tone. */
+const RING_SPAWN_L = 0.708
+
+const ringTargetCache = new WeakMap<NotePalette, Oklch>()
+
+function ringTarget(palette: NotePalette): Oklch {
+  let v = ringTargetCache.get(palette)
+  if (!v)
+    ringTargetCache.set(palette, v = hexToOklch(palette.ring))
+  return v
+}
+
+/**
+ * Ring tone at wake progress `k` (0 = spawn, 1 = the resting ring colour).
+ * The border is an achromatic neutral ramp — it spawns at neutral 400 and
+ * rises to `palette.ring` (neutral 50 by default) on the same envelope that
+ * wakes the fills, so the entry pose never pairs a pure-white border with a
+ * dimmed body (the neutral 400 spawn sits at L 0.708, between body 700 and
+ * the resting ring).
+ */
+export function ringTone(palette: NotePalette, k: number): string {
+  const b = ringTarget(palette)
+  const t = Math.min(1, Math.max(0, k))
+  return oklch(RING_SPAWN_L + (b.l - RING_SPAWN_L) * t, b.c * t, b.h)
+}
+
 /** Snapshot every family into plain hex — handy for exporting to Cytoid settings JSON. */
 export function exportPalette(p: Palette) {
   const out: Record<string, Record<Direction, NotePalette>> = {}

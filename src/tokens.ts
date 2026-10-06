@@ -122,7 +122,12 @@ export const tokens = {
     miss: '#6B6F7A',
   } satisfies Record<Grade, string>,
 
-  ring: '#FFFFFF',
+  /**
+   * Resting ring tone: neutral 50 (oklch 0.985 0 0). The ring is a neutral
+   * material, not pure white — it spawns at neutral 400 (oklch 0.708) and
+   * rises to this tone on the note's wake envelope (`ringTone` in palette.ts).
+   */
+  ring: '#FAFAFA',
   /** neutral ink used on top of fills (glyphs) */
   ink: '#1C1D24',
   /** playground stage background */

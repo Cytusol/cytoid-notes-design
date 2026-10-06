@@ -1,5 +1,5 @@
 /**
- * CLICK — circle, white ring, solid colour ball + growing core on the 50–950 shade scale.
+ * CLICK — circle, neutral ring (wakes 400 → 50), solid colour ball + growing core on the 50–950 shade scale.
  *
  * Timing feedback follows Cytus II's click (measured frame by frame): a dim
  * pre-roll — which is also what tells the next page apart from the current
@@ -23,14 +23,15 @@
  *  0.70–1.00  approach ring contracts *linearly in time* from 1.83 R onto the ring
  *             (≈ 0.08 R thick, ≤ 50 % opacity)
  *  0.86–1.00  double blink: a lead-in flash (0.86–0.89) then the final blink (0.92–1);
- *             the core flashes white and the ring thickens, settling exactly at p = 1
+ *             the core flashes white twice — the ring's own width stays a stable
+ *             build-only motion, settling exactly at p = 1
  *             (the hit pose is calm and full)
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { bump, inOutQuad, inQuad, lerp, outCubic, outQuad, outQuart, riseSettleCurve, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
-import { tone } from '../palette'
+import { ringTone, tone } from '../palette'
 import { tokens } from '../tokens'
 import { makeClearClips, makeMissClip } from './effects'
 import { arrowHead, assemblingRing, disk, ring } from './parts'
@@ -155,17 +156,17 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     split.k > 0 ? disk(coreR, split.core, split.k) : null,
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
-    assemblingRing(R - W / 2, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, 3, build, lerp(-TAU / 6, 0, build)),
+    assemblingRing(R - W / 2, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), 3, build, lerp(-TAU / 6, 0, build)),
   ].filter(Boolean) as SceneNode[], { transform: { scale } })
 
   return group([approach, body].filter(Boolean) as SceneNode[], { opacity: a })
 }
 
-/** White arrow (Cytoid CDragFill) pointing along the chain; `ctx.heading` rotates it. */
-export function dragArrow(ctx: DrawContext, inner: number, show: number): SceneNode | null {
+/** Arrow (Cytoid CDragFill) pointing along the chain; `ctx.heading` rotates it. Rides the ring's neutral wake. */
+export function dragArrow(ctx: DrawContext, inner: number, show: number, wake = 1): SceneNode | null {
   if (show <= 0)
     return null
-  return group([arrowHead(inner * 1.05, ctx.palette.ring)], {
+  return group([arrowHead(inner * 1.05, ringTone(ctx.palette, wake))], {
     opacity: show,
     transform: { rotate: ctx.heading, scale: lerp(0.6, 1, show) },
   })
@@ -178,7 +179,7 @@ export const click: NoteDesign = {
     mode: 'normalized',
     duration: tokens.time.enter,
     draw: (p, ctx) => clickEnter(p, ctx),
-    note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +6 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %.',
+    note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +6 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %. Ring (and the click-drag arrow) wake neutral 400 → 50 with the shade split.',
   },
   clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, seed: 1 }),
   miss: makeMissClip('circle'),
@@ -189,7 +190,7 @@ export const clickDragHead: NoteDesign = {
   kind: 'click-drag-head',
   enter: {
     ...click.enter,
-    draw: (p, ctx) => clickEnter(p, ctx, { glyph: (pp, c, inner) => dragArrow(c, inner * 0.62, outCubic(seg(pp, 0.1, 0.3))) }),
+    draw: (p, ctx) => clickEnter(p, ctx, { glyph: (pp, c, inner) => dragArrow(c, inner * 0.62, outCubic(seg(pp, 0.1, 0.3)), splitShades(pp, c).k) }),
     note: 'Click timing + white arrow pointing along the chain (rotate by heading).',
   },
 }

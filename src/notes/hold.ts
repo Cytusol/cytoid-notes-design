@@ -27,7 +27,7 @@ import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
 import { inOutCubic, inOutQuad, lerp, outBack, outCubic, outQuart, riseSettleCurve, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
-import { tone } from '../palette'
+import { ringTone, tone } from '../palette'
 import { tokens } from '../tokens'
 import { ringWidth, wakeAmount, wakeShade } from './click'
 import { makeClearClips, makeMissClip } from './effects'
@@ -74,12 +74,12 @@ function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number, spl
     // solid ball from the first frame
     disk(inner + 0.5, tone(ctx.palette, ball)),
     disk(lerp(inner + 0.5, innerRingR, split), tone(ctx.palette, core)),
-    glyph > 0 ? group([glyphShape(long, R * GLYPH, gw, ctx.palette.ring)], { opacity: seg(glyph, 0, 0.5), transform: { scale: lerp(0.4, 1, outBack(glyph, 2)) } }) : null,
-    assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ctx.palette.ring, 2, outQuart(k), lerp(-TAU / 4, 0, k)),
+    glyph > 0 ? group([glyphShape(long, R * GLYPH, gw, ringTone(ctx.palette, wake))], { opacity: seg(glyph, 0, 0.5), transform: { scale: lerp(0.4, 1, outBack(glyph, 2)) } }) : null,
+    assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ringTone(ctx.palette, wake), 2, outQuart(k), lerp(-TAU / 4, 0, k)),
   ].filter(Boolean) as SceneNode[])
 }
 
-function brackets(R: number, k: number, ctx: DrawContext, opacity: number): SceneNode {
+function brackets(R: number, k: number, ctx: DrawContext, opacity: number, color: string = ctx.palette.ring): SceneNode {
   const W = ctx.unit * tokens.stroke.hair * 2
   const r = lerp(R * 1.6, R * 1.28, k)
   const L = R * 0.36
@@ -92,7 +92,7 @@ function brackets(R: number, k: number, ctx: DrawContext, opacity: number): Scen
     items.push({
       type: 'poly',
       points: [[cx, cy - sy * L], [cx, cy], [cx - sx * L, cy]],
-      stroke: ctx.palette.ring,
+      stroke: color,
       strokeWidth: W,
       join: 'miter',
     })
@@ -113,7 +113,8 @@ function holdEnter(long: boolean) {
     // split starts after the fade-in (0.08) and lands with the steady pose (0.35)
     const split = inOutQuad(seg(p, 0.08, 0.35))
     const head = holdHead(ctx, long, k, glyph, split, wakeAmount(p))
-    const extra = long ? brackets(R, inOutCubic(seg(p, 0.1, 0.45)), ctx, seg(p, 0.1, 0.25)) : null
+    // white material (ring, glyph, brackets) rides the wake: neutral 400 → 50
+    const extra = long ? brackets(R, inOutCubic(seg(p, 0.1, 0.45)), ctx, seg(p, 0.1, 0.25), ringTone(ctx.palette, wakeAmount(p))) : null
     return group([extra, head], { opacity: seg(p, 0, 0.08), transform: { scale: holdSize(p) } })
   }
 }
@@ -187,8 +188,8 @@ function makeHold(long: boolean): NoteDesign {
       duration: tokens.time.enter,
       draw: holdEnter(long),
       note: long
-        ? 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; square glyph + corner brackets.'
-        : 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; circle glyph.',
+        ? 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; square glyph + corner brackets; whites wake neutral 400 → 50.'
+        : 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; circle glyph; whites wake neutral 400 → 50.',
     },
     hold: {
       press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86; the centre glyph stays.' },

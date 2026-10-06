@@ -36,11 +36,12 @@
 
 - Colour families map one-to-one onto Cytoid's fill slots: `click / hold / flick / long-hold / drag / click-drag / drop-click / drop-drag`. Every family has **up / down** scan-direction variants, matching Cytoid's `UseAlternativeColor`.
 - The user only picks an **OKLCH hue**; lightness and chroma derive from `fitLightness(h)` and `tokens.chroma`. Yellow-greens are brightened automatically, so every hue carries the same visual weight as the defaults. Safer — and better UX — than picking raw hex.
-- Each hue derives a **Tailwind-style shade scale `50 · 100 · 200 … 900 · 950`** (`SHADES`), plus `ring` (outer ring and lines, white by default) and `ink` (glyphs on fills):
+- Each hue derives a **Tailwind-style shade scale `50 · 100 · 200 … 900 · 950`** (`SHADES`), plus `ring` (outer ring and lines, default neutral 50 `#FAFAFA`) and `ink` (glyphs on fills):
   - **400 is the true colour** (`BASE_SHADE`) — the input hue/hex lands exactly there. Our default lightness (≈0.705) sits on Tailwind's OKLCH 400 curve.
   - Lighter steps move a fixed fraction of the way from 400's lightness toward 0.985; darker steps scale it down; chroma is a fixed multiple of 400's (table `SCALE` in `src/palette.ts`). So the scale keeps its shape for every hue, including brightened yellow-greens and raw hex inputs.
   - Steps in use: **400** fills (note bodies, completed hold bars, drops); **600** the spawn ball, hold core and ping, flick slit, drag-child hairline, drop-drag notches; **800** dim bases, unfilled tracks, miss ghosts; **300** hold ripples. (These replace the former `fill` / `deep` / `track` / `light` roles one-to-one; default blue/red are unchanged to within 1 RGB level.)
   - `tone(palette, step)` samples the scale at any fractional step, piecewise-linear in OKLCH between neighbouring shades (exact steps return the scale colour; clamped to 50–950). Every in-note colour that moves between shades — the click/flick split, the hold head, the wake page cue — is expressed as a step on this scale, never as an ad-hoc mix.
+  - The ring is an **achromatic neutral material**, not pure white: it spawns at neutral 400 (oklch 0.708) and rises to the resting `ring` tone (neutral 50, oklch 0.985) on the same envelope that wakes the fills — `ringTone(palette, k)`. Before this, a pure-#FFF border paired with the dimmed entry body made the spawn pose the highest-contrast frame on screen (ΔL 0.54 against the 700 ball, 0.79 against the stage); starting at neutral 400 roughly halves both gaps and the border brightens together with the note it belongs to.
 - Cytoid custom colours are compatible: a family override may also be a `#rrggbb` value, in which case that colour's own lightness and chroma are kept and it is **not** affected by `hueShift`.
 - A global `hueShift`, `saturation` (0 = monochrome) and a `ring` colour are also supported.
 - Grade colours follow Cytoid's defaults: Perfect `#5BC0EB`, Great `#FDE74C`, Good `#9BC53D`, Bad `#E55934`. Miss becomes a neutral grey `#6B6F7A` so it reads on the dark background.
@@ -75,17 +76,18 @@ A hold's active phase stacks three layers, bottom to top: `press` (the note body
 p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 
 ### Click / Click drag head
-- **Structure**: solid ball, core and white outer ring, coloured on the **shade scale**:
+- **Structure**: solid ball, core and neutral outer ring, coloured on the **shade scale**:
+  - the ring spawns at neutral 400 and rises to neutral 50 with the shade split (0.4–0.85) — during the dim pre-roll the border sits between the 700 ball (L 0.47) and the resting ring (L 0.985) instead of blazing white;
   - at first the ball and core are both 700 (`SPAWN_SHADE`) — the note reads as one solid-coloured ball;
   - as the hit approaches, the core rises from 700 to 400 (the true colour) and grows while the background sinks from 700 to 800;
   - the colour progression runs 0.4–0.85 (ease-out). Before 0.4 the core (already at 0.36) sits blended into the 700 ball — one flat disc, no internal motion to read; the deferred differentiation is what reveals the late core growth;
   - the spawn sits at 700 (L≈0.47 for the defaults; 800 L≈0.39, 400 L≈0.70) — darker than the measured Cytus II spawn ball (L 0.53, ≈ 600) so the start reads clearly dim. As in Cytus II the base then sinks to L 0.39 and the core rises to 0.70 — a lightness gap of ≈ 0.3 at the hit. (An earlier round halved this gap; players then could only read timing from the scan line.)
 - **Timing feedback**: modelled frame-by-frame on Cytus II's click (41 frames). The original: a dim ball with a tiny core for the first half; the core grows mostly in the second half (0.16R at p 0.44 → 0.65R at p 0.93, accelerating); from p≈0.73 a white concentric ring (α≈0.5, ≈0.08R thick) converges linearly from 1.74R onto the ring; a near-white flash at p≈0.95. The flat equivalent:
-  - 0–0.1 fade in; 0–0.4 the outer ring assembles from 3 arcs. The size is not hand-timed at all — see the fitted curve below.
+  - 0–0.1 fade in; 0–0.4 the outer ring assembles from 3 arcs (at the spawn tone, neutral 400 — it wakes with the split). The size is not hand-timed at all — see the fitted curve below.
   - 0.42–0.94 the core grows from 0.36 (large, barely moving early — stable, not lively) to 0.8× the inner radius with **ease-in (quad)** — most of the growth lands in the last third. At the hit the core is the true colour with an 800 rim left around it.
   - 0.7–1 a white **approach ring** converges from 1.83R onto the ring **linearly in time**, 1.5–2.1× the hairline thick, up to 0.5 opacity (Cytus II's weight); the linear motion keeps the speed readable.
-  - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6, ring thickened 25%), forming a double-blink rhythm;
-  - 0.92–1 the **final blink**: the core flashes white (up to α 0.6) and the ring thickens 25%, settling exactly at p = 1.
+  - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6), forming a double-blink rhythm; the ring's width is untouched — the blink lives on the core only;
+  - 0.92–1 the **final blink**: the core flashes white (up to α 0.6); the ring width has already settled (its only motion is the 0–0.4 assembly) and stays stable to p = 1.
   - 0–1 the **fitted size curve** `tokens.sizeCurve.click` — one S-curve (cubic-bezier 0.7/0.75, fitted to the measured frames) from the small dim spawn at 0.32 across the full-size crossing (p ≈ 0.74) to the **+6 % peak at p 0.88** — together with the lead-in blink and the converging ring arriving — then one S settle, exactly 1.0 (the hit pose) from p 0.976. The flick shares this curve. The approach ring keeps its fixed linear path; at the peak the body edge still stays inside it.
 - **Click drag head**: identical timing to the click, with a white arrow over the core pointing at the next chain node (`heading`).
 
@@ -96,7 +98,7 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - a **static** small white circle at the core's centre (radius 0.2R).
 
   Holds carry no arrows — arrows would suggest dragging.
-- **Entry**: holds can be pressed early, so there is **no timing read-out**. 0–0.35 snap into shape, 0.2–0.42 the centre circle pops in, then the internals stay still. The **size follows the same fitted S-curve as the click** (`tokens.sizeCurve.hold` = click's anchors on purpose) so hold and click read the same size flow during the approach. The colours **wake** over p 0.45–0.7: before that the ball sits at 600 and the core at 800, afterwards ball 400 and core 600 (`HOLD_CORE`).
+- **Entry**: holds can be pressed early, so there is **no timing read-out**. 0–0.35 snap into shape, 0.2–0.42 the centre circle pops in, then the internals stay still. The **size follows the same fitted S-curve as the click** (`tokens.sizeCurve.hold` = click's anchors on purpose) so hold and click read the same size flow during the approach. The colours **wake** over p 0.45–0.7: before that the ball sits at 600 and the core at 800, afterwards ball 400 and core 600 (`HOLD_CORE`). The white material (outer ring, centre glyph, long-hold brackets) rides the same wake as a neutral ramp — neutral 400 → 50 (`ringTone`).
 - **press** (0.2 s): the body sinks to 0.86; the centre circle stays put.
 - **loop** (0.6 s, drawn above the body, seamless):
   - **inner ping**: the dark core itself plays a Tailwind `animate-ping`-style animation. Every half period (same frequency and phase as the outer ripples) a copy of the core disc scales to 2× and fades out over the first 75%, curve ≈ cubic-bezier(0, 0, 0.2, 1). The copy is clipped to the head's inner radius so it never dims the white ring; the centre glyph stays still, drawn on top.
@@ -117,8 +119,8 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 - **clear**: adds a vertical beam that extends ~3R up and down, then narrows and fades.
 
 ### Drag series (Drag head / Drag child / Click drag child)
-- Players only follow the path, so the ring, arrow and hairline **assemble by p = 0.2** and the wake (p 0.45–0.7) is colour-only — nothing on the note tracks the beat. The **size follows the fitted Cytus II S-curves** (`tokens.sizeCurve.dragHead` / `.dragChild`): spawn 0.29 / 0.26, one smooth growth into the **+5 % / +3 % peak at p 0.77**, settled back to exactly 1.0 from p 0.87 / 0.85. Only the fill wakes from 600 to 400 over p 0.45–0.7 (the page cue; the child’s hairline goes 800 → 600 with it).
-- **Drag head**: white ring, full fill, plus a **white arrow** pointing along the chain (Cytoid's CDragFill shape).
+- Players only follow the path, so the ring, arrow and hairline **assemble by p = 0.2** and the wake (p 0.45–0.7) is colour-only — nothing on the note tracks the beat. The **size follows the fitted Cytus II S-curves** (`tokens.sizeCurve.dragHead` / `.dragChild`): spawn 0.29 / 0.26, one smooth growth into the **+5 % / +3 % peak at p 0.77**, settled back to exactly 1.0 from p 0.87 / 0.85. Only the fill wakes from 600 to 400 over p 0.45–0.7 (the page cue; the child’s hairline goes 800 → 600 with it, and the head's ring + arrow wake neutral 400 → 50 on the same window).
+- **Drag head**: neutral ring (wakes 400 → 50), full fill, plus a **matching arrow** pointing along the chain (Cytoid's CDragFill shape).
   - The arrow angle comes from `createContext(..., { heading })`: 0 points up, clockwise positive.
   - Frames are baked arrow-up; rotate the whole sprite in use — the round body is rotationally symmetric, so rotation is invisible on it.
   - **After triggering (hit or miss)**: the head follows the scan line along the connection, drawn with the drag head entry's **last frame** (the steady pose, matching how it looked at the moment of triggering); a click drag head uses the same last frame in Click-family colours.
@@ -132,9 +134,9 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 ### Flick
 - **Structure**: a diamond outline, diamond base and diamond core (the same shade split as the click), plus a centre vertical slit (600). The side chevrons open at 90°. The slit is a flat nod to Cytoid's split diamond. The core shares the click's timing language: dim pre-roll, late ease-in growth and a double blink (0.86–0.89 + 0.92–1), and the diamond body plays **Click's fitted size curve** (`CLICK_SIZE`; Cytus II's own flick curve instead shrinks steadily and swaps to a larger white hit diamond on the final frame). The chevrons do not scale with it: they sit far enough outside the swollen diamond.
 - **Entry**:
-  - 0–0.45 the diamond's four edges grow from their midpoints;
+  - 0–0.45 the diamond's four edges grow from their midpoints (at the spawn tone, neutral 400 — the outline wakes neutral 400 → 50 with the split, like the click's ring);
   - the centre slit appears with the core: its length follows the core's ease-out growth, opacity easing out over 0.05–0.45;
-  - the two outward chevrons converge with **ease-out** (fast first, then slow), settled at p = 0.45;
+  - the two outward chevrons converge with **ease-out** (fast first, then slow), settled at p = 0.45; they ride the same neutral wake as the outline (the later approach pair stays at the resting tone — it is a timing gauge);
   - 0.7–1 a thinner **approach chevron pair** (α ≤ 0.5) converges linearly from 0.35u outside onto them — the flick's approach ring, after Cytus II's second chevron pair.
 - **clear**: 4 sector arcs, plus two shorter horizontal impact bars left and right and horizontal shards, plus **V-shaped arrows sweeping right** marking the swipe direction. The arrows are **dashed, wide**, about as tall as the centre slit (~0.76R), thick-stroked, opacity ≤ 0.42. Their opening is 90°, matching the flick diamond's corner and the note's side chevrons; size, angle and stroke never change — only position and opacity. Counts: Perfect 3, Great 2, Good and Bad 1 each, staggered 0.08 apart.
   - The animation is baked right-facing. For a left swipe rotate the whole effect 180°; any future direction support rotates likewise.
