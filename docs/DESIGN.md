@@ -78,11 +78,11 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
 - **Structure**: solid ball, core and white outer ring, coloured on the **shade scale**:
   - at first the ball and core are both 700 (`SPAWN_SHADE`) — the note reads as one solid-coloured ball;
   - as the hit approaches, the core rises from 700 to 400 (the true colour) and grows while the background sinks from 700 to 800;
-  - the colour progression runs 0.25–0.85 (ease-out) and the core fades in with the divergence (stacking a translucent same-colour core during the fade would paint a brighter dot at the centre);
+  - the colour progression runs 0.4–0.85 (ease-out). Before 0.4 the core (already at 0.36) sits blended into the 700 ball — one flat disc, no internal motion to read; the deferred differentiation is what reveals the late core growth;
   - the spawn sits at 700 (L≈0.47 for the defaults; 800 L≈0.39, 400 L≈0.70) — darker than the measured Cytus II spawn ball (L 0.53, ≈ 600) so the start reads clearly dim. As in Cytus II the base then sinks to L 0.39 and the core rises to 0.70 — a lightness gap of ≈ 0.3 at the hit. (An earlier round halved this gap; players then could only read timing from the scan line.)
 - **Timing feedback**: modelled frame-by-frame on Cytus II's click (41 frames). The original: a dim ball with a tiny core for the first half; the core grows mostly in the second half (0.16R at p 0.44 → 0.65R at p 0.93, accelerating); from p≈0.73 a white concentric ring (α≈0.5, ≈0.08R thick) converges linearly from 1.74R onto the ring; a near-white flash at p≈0.95. The flat equivalent:
   - 0–0.1 fade in; 0–0.4 the outer ring assembles from 3 arcs. The size is not hand-timed at all — see the fitted curve below.
-  - 0.42–0.94 the core grows from a dot (0.24) to 0.8× the inner radius with **ease-in (quad)** — most of the growth lands in the last third. At the hit the core is the true colour with an 800 rim left around it.
+  - 0.42–0.94 the core grows from 0.36 (large, barely moving early — stable, not lively) to 0.8× the inner radius with **ease-in (quad)** — most of the growth lands in the last third. At the hit the core is the true colour with an 800 rim left around it.
   - 0.7–1 a white **approach ring** converges from 1.83R onto the ring **linearly in time**, 1.5–2.1× the hairline thick, up to 0.5 opacity (Cytus II's weight); the linear motion keeps the speed readable.
   - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6, ring thickened 25%), forming a double-blink rhythm;
   - 0.92–1 the **final blink**: the core flashes white (up to α 0.6) and the ring thickens 25%, settling exactly at p = 1.

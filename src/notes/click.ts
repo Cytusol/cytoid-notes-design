@@ -13,10 +13,13 @@
  *             converging ring — then a smooth settle, exactly 1.0 (the hit
  *             pose) from p 0.976
  *  0.00–0.10  fade in; 0–0.40 the outer ring assembles from 3 arcs
- *  0.25–0.85  shade split: core rises 700 → 400 (true colour), background sinks 700 → 800
- *             (full, uncompressed contrast — ΔL ≈ 0.3 at the hit, as Cytus II)
- *  0.42–0.94  core grows ease-in from a small dot to 0.8·inner — most of the
- *             growth lands in the last third
+ *  0.00–0.40  one flat ball: the core sits at 0.36, blended into the 700 shade —
+ *             no internal motion to read
+ *  0.40–0.85  shade split: the core is differentiated out (rises 700 → 400, true
+ *             colour), the background sinks 700 → 800 (full, uncompressed
+ *             contrast — ΔL ≈ 0.3 at the hit, as Cytus II)
+ *  0.42–0.94  the core (already at 0.36 — barely moving early, stable) swells
+ *             ease-in to 0.8·inner — most of the growth lands in the last third
  *  0.70–1.00  approach ring contracts *linearly in time* from 1.83 R onto the ring
  *             (≈ 0.08 R thick, ≤ 50 % opacity)
  *  0.86–1.00  double blink: a lead-in flash (0.86–0.89) then the final blink (0.92–1);
@@ -42,7 +45,7 @@ export const CORE_MAX = 0.8
 
 /** Phase boundaries (normalised). */
 export const CLICK_TIMING = {
-  splitFrom: 0.25,
+  splitFrom: 0.4,
   splitTo: 0.85,
   coreFrom: 0.42,
   coreFull: 0.94,
@@ -113,9 +116,15 @@ export interface ClickOptions {
   glyph?: (p: number, ctx: DrawContext, inner: number) => SceneNode | null
 }
 
-/** Core size 0..1 shared with flick: a small dot that swells late (ease-in). */
+/**
+ * Core size 0..1 shared with flick: a big dot (0.36) that swells late
+ * (ease-in). Starting large means it barely moves early — the core reads as
+ * stable, not lively — and the deferred shade split (`splitFrom` 0.4) keeps
+ * it blended into the ball until the second half, so the late growth is
+ * what gets revealed, not chased.
+ */
 export function coreGrowth(p: number): number {
-  return lerp(0.24, 1, inQuad(seg(p, CLICK_TIMING.coreFrom, CLICK_TIMING.coreFull)))
+  return lerp(0.36, 1, inQuad(seg(p, CLICK_TIMING.coreFrom, CLICK_TIMING.coreFull)))
 }
 
 export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): SceneNode {
@@ -141,8 +150,8 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
   const body = group([
     // solid ball from the first frame; 700 → core rises to 400, background sinks to 800
     disk(inner + 0.5, split.base),
-    // the core fades in with the shade split — while it is still the base colour a
-    // stacked translucent copy reads as a bright dot during the entry fade
+    // the core only appears once the split starts (0.4): before that the ball
+    // reads as one flat disc — the deferred differentiation is the point
     split.k > 0 ? disk(coreR, split.core, split.k) : null,
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,

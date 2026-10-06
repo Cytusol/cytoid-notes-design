@@ -80,7 +80,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     split.k > 0 ? diamond(inner * CORE_MAX * g, { fill: split.core, opacity: split.k }) : null,
     blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
-    { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, 0.05, 0.45)) },
+    { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, CLICK_TIMING.splitFrom, 0.75)) },
     buildingDiamond(rv, lerp(W * 0.45, W, build) * (1 + 0.25 * blink), ctx.palette.ring, build),
   ].filter(Boolean) as SceneNode[], { transform: { scale: clickSize(p) } })
 
