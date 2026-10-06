@@ -9,9 +9,11 @@
  *
  * Entry mirrors the click shade language on the palette scale: the head
  * spawns as one 600 ball, then the core contracts onto the inner ring as the
- * background rises to 400 (the note colour). Shape steady by p ≈ 0.35; every
- * shade stays WAKE_DROP steps darker until the click's WAKE window (0.45–0.7) — a page
- * cue, not a gauge.
+ * background rises to 400 (the note colour). Internals steady by p ≈ 0.35;
+ * the overall size follows the click's fitted S-curve exactly
+ * (`tokens.sizeCurve.hold` = click's anchors) so hold and click read the same
+ * size during the approach. Every shade stays WAKE_DROP steps darker until the
+ * click's WAKE window (0.45–0.7) — a page cue, not a gauge.
  * No arrows: arrows would suggest dragging.
  *
  * Holding is split into independent layers (frame-friendly), composed as
@@ -23,7 +25,7 @@
  */
 import type { SceneNode } from '../core/scene'
 import type { DrawContext, NoteDesign } from './types'
-import { inOutCubic, inOutQuad, lerp, outBack, outCubic, outQuart, seg, TAU } from '../core/ease'
+import { inOutCubic, inOutQuad, lerp, outBack, outCubic, outQuart, riseSettleCurve, seg, TAU } from '../core/ease'
 import { group } from '../core/scene'
 import { tone } from '../palette'
 import { tokens } from '../tokens'
@@ -99,16 +101,20 @@ function brackets(R: number, k: number, ctx: DrawContext, opacity: number): Scen
 }
 
 function holdEnter(long: boolean) {
+  // the size follows the click's fitted S-curve exactly (tokens.sizeCurve.hold =
+  // click's anchors): hold and click must read the same size during approach
+  const holdSize = riseSettleCurve(tokens.sizeCurve.hold, tokens.sizeCurve.s)
   return (p: number, ctx: DrawContext): SceneNode => {
     const R = ctx.size / 2
-    // steady by p = 0.35 — no timing to read on a hold head
+    // steady by p = 0.35 — no timing to read on a hold head (internals only;
+    // the size keeps following the fitted curve)
     const k = outCubic(seg(p, 0, 0.35))
     const glyph = seg(p, 0.2, 0.42)
     // split starts after the fade-in (0.08) and lands with the steady pose (0.35)
     const split = inOutQuad(seg(p, 0.08, 0.35))
     const head = holdHead(ctx, long, k, glyph, split, wakeAmount(p))
     const extra = long ? brackets(R, inOutCubic(seg(p, 0.1, 0.45)), ctx, seg(p, 0.1, 0.25)) : null
-    return group([extra, head], { opacity: seg(p, 0, 0.08), transform: { scale: lerp(0.7, 1, k) } })
+    return group([extra, head], { opacity: seg(p, 0, 0.08), transform: { scale: holdSize(p) } })
   }
 }
 
@@ -181,8 +187,8 @@ function makeHold(long: boolean): NoteDesign {
       duration: tokens.time.enter,
       draw: holdEnter(long),
       note: long
-        ? 'Shape steady fast (no timing to read), colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; square glyph + corner brackets.'
-        : 'Shape steady fast (no timing to read), colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; circle glyph.',
+        ? 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; square glyph + corner brackets.'
+        : 'Internals steady fast; size follows the click\'s fitted S-curve. Colours dim until p 0.45–0.7 (page cue). 600 ball splits: ball rises to 400, core stays 600 on the inner ring; circle glyph.',
     },
     hold: {
       press: { id: 'hold-press', mode: 'once', duration: tokens.time.holdPress, draw: holdPress(long), note: 'Head sinks to 0.86; the centre glyph stays.' },

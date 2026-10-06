@@ -96,7 +96,7 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - a **static** small white circle at the core's centre (radius 0.2R).
 
   Holds carry no arrows — arrows would suggest dragging.
-- **Entry**: holds can be pressed early, so there is **no timing read-out**. 0–0.35 snap into shape, 0.2–0.42 the centre circle pops in, then the shape stays still. The colours **wake** over p 0.45–0.7: before that the ball sits at 600 and the core at 800, afterwards ball 400 and core 600 (`HOLD_CORE`).
+- **Entry**: holds can be pressed early, so there is **no timing read-out**. 0–0.35 snap into shape, 0.2–0.42 the centre circle pops in, then the internals stay still. The **size follows the same fitted S-curve as the click** (`tokens.sizeCurve.hold` = click's anchors on purpose) so hold and click read the same size flow during the approach. The colours **wake** over p 0.45–0.7: before that the ball sits at 600 and the core at 800, afterwards ball 400 and core 600 (`HOLD_CORE`).
 - **press** (0.2 s): the body sinks to 0.86; the centre circle stays put.
 - **loop** (0.6 s, drawn above the body, seamless):
   - **inner ping**: the dark core itself plays a Tailwind `animate-ping`-style animation. Every half period (same frequency and phase as the outer ripples) a copy of the core disc scales to 2× and fades out over the first 75%, curve ≈ cubic-bezier(0, 0, 0.2, 1). The copy is clipped to the head's inner radius so it never dims the white ring; the centre glyph stays still, drawn on top.
