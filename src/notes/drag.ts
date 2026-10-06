@@ -43,7 +43,7 @@ function headDraw(p: number, ctx: DrawContext): SceneNode {
     disk(R - W + 0.5, tone(ctx.palette, wakeShade(400, w))),
     dragArrow(ctx, (R - W) * 0.95, outCubic(seg(p, STEADY * 0.3, STEADY)), w),
     // ring + arrow are white material: they wake neutral 400 → 50 with the page cue
-    assemblingRing(R - W / 2, W, ringTone(ctx.palette, w), 2, k, lerp(-TAU / 4, 0, k)),
+    assemblingRing(R - W / 2, W, ringTone(ctx.palette, w), 2, k, lerp(-TAU / 4, 0, k), 1, { color: tokens.edge, fraction: tokens.stroke.edge }),
   ].filter(Boolean) as SceneNode[], { opacity: seg(p, 0, 0.06), transform: { scale: dragHeadSize(p) } })
 }
 

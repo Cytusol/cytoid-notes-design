@@ -69,6 +69,14 @@ export const tokens = {
   stroke: {
     /** main white ring, relative to unit */
     ring: 0.085,
+    /**
+     * Dark keyline on the ring's outer edge, as a fraction of the ring band
+     * (`ringWidth`). The band is *split*, not widened — total width and the
+     * outer radius stay exactly as calibrated. This is the flat answer to
+     * overlapping notes: two white rings would merge; the keyline (Cytus II's
+     * dark rim, reduced to one solid band) keeps a boundary.
+     */
+    edge: 0.34,
     /** secondary / decorative hairlines */
     hair: 0.022,
     /** hold progress ring */
@@ -128,6 +136,14 @@ export const tokens = {
    * rises to this tone on the note's wake envelope (`ringTone` in palette.ts).
    */
   ring: '#FAFAFA',
+  /**
+   * Ring edge keyline (`tokens.stroke.edge`): an achromatic near-black sitting
+   * between the stage (#16171D) and ink (#1C1D24) — near-invisible against the
+   * stage (an isolated note's silhouette is unchanged, no added noise) and
+   * crisp against the lit ring, so it only "appears" where notes overlap.
+   * Constant colour, no wake of its own — like Cytus II's dark rim.
+   */
+  edge: '#1A1B22',
   /** neutral ink used on top of fills (glyphs) */
   ink: '#1C1D24',
   /** playground stage background */

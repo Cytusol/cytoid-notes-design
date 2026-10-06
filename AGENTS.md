@@ -26,6 +26,7 @@ Flat-style redesign of every Cytoid note (vector spec + baked frame animations) 
 - Click-drag family defaults to the click hues.
 - Effects must fully fade by `duration` (tested). Loops must be seamless (tested).
 - Flat only: solid fills/strokes, opacity; no gradients/glow.
+- Every ring is a composite band: white material (outer `tokens.stroke.edge` fraction = a dark keyline, `tokens.edge`) + the neutral band — the flat overlap separator (Cytus II's dark rim, reduced to one solid band; total width and outer radius unchanged, near-invisible against the stage). Drawn via `assemblingRing`'s `edge` option (click/drag/hold families), `buildingDiamond`'s (flick) or the grown capsule path (drop). Gauges and drag children carry no keyline.
 
 ## Commands
 - `pnpm test`, `pnpm typecheck`, `pnpm lint --fix`, `pnpm bake [--cylheim]`, `pnpm dev`, `pnpm build:playground`.

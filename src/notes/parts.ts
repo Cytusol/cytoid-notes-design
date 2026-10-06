@@ -21,19 +21,40 @@ export function arc(r: number, start: number, end: number, width: number, stroke
 /**
  * Ring assembled from `n` equal arcs that grow from their own centre.
  * `k` = 0 → nothing, 1 → closed ring. `spin` rotates the whole set.
+ *
+ * `edge` draws a dark keyline over the outer fraction of the band (see
+ * `tokens.stroke.edge`) — the flat overlap separator. The band is split,
+ * not widened: the keyline rides the band's outer edge (centreline shifted
+ * out by (width−e)/2) so the silhouette is unchanged, and it shares the
+ * assembly motion — no second envelope.
  */
-export function assemblingRing(r: number, width: number, stroke: string, n: number, k: number, spin = 0, opacity = 1): SceneNode {
-  if (k >= 0.999)
-    return ring(r, width, stroke, opacity)
+export function assemblingRing(
+  r: number,
+  width: number,
+  stroke: string,
+  n: number,
+  k: number,
+  spin = 0,
+  opacity = 1,
+  edge?: { color: string, fraction: number },
+): SceneNode {
+  const closed = k >= 0.999
   const span = TAU / n
   const half = (span * k) / 2
-  return group(
-    Array.from({ length: n }, (_, i) => {
-      const c = spin + i * span
-      return arc(r, c - half, c + half, width, stroke)
-    }),
-    { opacity },
-  )
+  const band = (rr: number, w: number, color: string): SceneNode =>
+    closed
+      ? ring(rr, w, color, opacity)
+      : group(
+          Array.from({ length: n }, (_, i) => {
+            const c = spin + i * span
+            return arc(rr, c - half, c + half, w, color)
+          }),
+          { opacity },
+        )
+  const e = edge ? width * Math.min(1, Math.max(0, edge.fraction)) : 0
+  if (!edge || !(e > 0))
+    return band(r, width, stroke)
+  return group([band(r, width, stroke), band(r + (width - e) / 2, e, edge.color)])
 }
 
 /** Dashed ring made of `n` dashes, duty in (0, 1]. */

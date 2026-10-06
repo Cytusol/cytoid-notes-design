@@ -75,7 +75,7 @@ function holdHead(ctx: DrawContext, long: boolean, k: number, glyph: number, spl
     disk(inner + 0.5, tone(ctx.palette, ball)),
     disk(lerp(inner + 0.5, innerRingR, split), tone(ctx.palette, core)),
     glyph > 0 ? group([glyphShape(long, R * GLYPH, gw, ringTone(ctx.palette, wake))], { opacity: seg(glyph, 0, 0.5), transform: { scale: lerp(0.4, 1, outBack(glyph, 2)) } }) : null,
-    assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ringTone(ctx.palette, wake), 2, outQuart(k), lerp(-TAU / 4, 0, k)),
+    assemblingRing(R - W / 2, lerp(W * 0.5, W, k), ringTone(ctx.palette, wake), 2, outQuart(k), lerp(-TAU / 4, 0, k), 1, { color: tokens.edge, fraction: tokens.stroke.edge }),
   ].filter(Boolean) as SceneNode[])
 }
 

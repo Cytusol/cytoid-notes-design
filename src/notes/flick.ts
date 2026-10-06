@@ -28,21 +28,33 @@ function flickArrow(size: number, width: number, color: string): SceneNode {
   return flickChevron(size * 0.3, size * 0.6, width, color)
 }
 
-/** Diamond outline drawn edge by edge; k ∈ [0,1]. */
-function buildingDiamond(r: number, width: number, color: string, k: number): SceneNode {
-  if (k >= 0.999)
-    return diamond(r, { stroke: color, strokeWidth: width })
-  const pts = regularPolygon(4, r)
-  const lines: SceneNode[] = []
-  for (let i = 0; i < 4; i++) {
-    const [x1, y1] = pts[i]!
-    const [x2, y2] = pts[(i + 1) % 4]!
-    // each edge grows from its midpoint toward both vertices
-    const mx = (x1 + x2) / 2
-    const my = (y1 + y2) / 2
-    lines.push({ type: 'line', x1: lerp(mx, x1, k), y1: lerp(my, y1, k), x2: lerp(mx, x2, k), y2: lerp(my, y2, k), stroke: color, strokeWidth: width, cap: 'square' })
+/**
+ * Diamond outline drawn edge by edge; k ∈ [0,1]. `edge` = dark keyline on the
+ * band's outer edge (flat overlap separator, `tokens.stroke.edge`): for a
+ * stroked square the centreline shifts outward by (width−e)/2 along the edge
+ * normal — i.e. (width−e)/(2·cos 45°) per vertex radius — so the keyline's
+ * outer boundary (miter tips included) coincides with the white band's.
+ */
+function buildingDiamond(r: number, width: number, color: string, k: number, edge?: { color: string, fraction: number }): SceneNode {
+  const band = (rr: number, w: number, c: string): SceneNode => {
+    if (k >= 0.999)
+      return diamond(rr, { stroke: c, strokeWidth: w })
+    const pts = regularPolygon(4, rr)
+    const lines: SceneNode[] = []
+    for (let i = 0; i < 4; i++) {
+      const [x1, y1] = pts[i]!
+      const [x2, y2] = pts[(i + 1) % 4]!
+      // each edge grows from its midpoint toward both vertices
+      const mx = (x1 + x2) / 2
+      const my = (y1 + y2) / 2
+      lines.push({ type: 'line', x1: lerp(mx, x1, k), y1: lerp(my, y1, k), x2: lerp(mx, x2, k), y2: lerp(my, y2, k), stroke: c, strokeWidth: w, cap: 'square' })
+    }
+    return group(lines)
   }
-  return group(lines)
+  const e = edge ? width * Math.min(1, Math.max(0, edge.fraction)) : 0
+  if (!edge || !(e > 0))
+    return band(r, width, color)
+  return group([band(r, width, color), band(r + (width - e) / (2 * Math.cos(Math.PI / 4)), e, edge.color)])
 }
 
 function flickEnter(p: number, ctx: DrawContext): SceneNode {
@@ -83,7 +95,7 @@ function flickEnter(p: number, ctx: DrawContext): SceneNode {
     blink > 0 ? diamond(inner * CORE_MAX * g, { fill: ctx.palette.ring, opacity: 0.6 * blink }) : null,
     // centre slit: flat nod to Cytoid's split-diamond flick fill
     { type: 'line', x1: 0, y1: -inner * 0.5 * g, x2: 0, y2: inner * 0.5 * g, stroke: ctx.palette[600], strokeWidth: W * 0.5, opacity: outCubic(seg(p, CLICK_TIMING.splitFrom, 0.75)) },
-    buildingDiamond(rv, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), build),
+    buildingDiamond(rv, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), build, { color: tokens.edge, fraction: tokens.stroke.edge }),
   ].filter(Boolean) as SceneNode[], { transform: { scale: clickSize(p) } })
 
   return group([approach, arrows, body].filter(Boolean) as SceneNode[], { opacity: a })

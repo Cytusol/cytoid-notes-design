@@ -22,9 +22,14 @@ function dropStatic(core: boolean) {
     const w = ctx.size * DROP_ASPECT.w
     const h = ctx.size * DROP_ASPECT.h
     const W = h * 0.2
+    // dark keyline on the ring's outer edge (flat overlap separator): the
+    // capsule path is grown by (W−e) so its outer boundary — the capsule's
+    // silhouette — is unchanged, and the white band stays W−e visible
+    const e = W * tokens.stroke.edge
     const items: SceneNode[] = [
       capsule(w - W, h - W, { fill: ctx.palette[400] }),
       capsule(w - W / 2, h - W / 2, { stroke: ctx.palette.ring, strokeWidth: W }),
+      capsule(w - W / 2 + (W - e), h - W / 2 + (W - e), { stroke: tokens.edge, strokeWidth: e }),
     ]
     if (core) {
       items.push(capsule(w * 0.5, h * 0.26, { fill: ctx.palette.ring }))

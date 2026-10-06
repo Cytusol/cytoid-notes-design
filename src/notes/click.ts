@@ -156,7 +156,7 @@ export function clickEnter(p: number, ctx: DrawContext, o: ClickOptions = {}): S
     split.k > 0 ? disk(coreR, split.core, split.k) : null,
     blink > 0 ? disk(coreR, ctx.palette.ring, 0.6 * blink) : null,
     o.glyph?.(p, ctx, inner) ?? null,
-    assemblingRing(R - W / 2, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), 3, build, lerp(-TAU / 6, 0, build)),
+    assemblingRing(R - W / 2, lerp(W * 0.45, W, build), ringTone(ctx.palette, split.k), 3, build, lerp(-TAU / 6, 0, build), 1, { color: tokens.edge, fraction: tokens.stroke.edge }),
   ].filter(Boolean) as SceneNode[], { transform: { scale } })
 
   return group([approach, body].filter(Boolean) as SceneNode[], { opacity: a })
