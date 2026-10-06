@@ -87,8 +87,8 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - 0–0.1 fade in; 0–0.4 the outer ring assembles from 3 arcs (at the spawn tone, neutral 400 — it wakes with the split). The size is not hand-timed at all — see the fitted curve below.
   - 0.42–0.94 the core grows from 0.36 (large, barely moving early — stable, not lively) to 0.8× the inner radius with **ease-in (quad)** — most of the growth lands in the last third. At the hit the core is the true colour with an 800 rim left around it.
   - 0.7–1 a white **approach ring** converges from 1.83R onto the ring **linearly in time**, 1.5–2.1× the hairline thick, up to 0.5 opacity (Cytus II's weight); the linear motion keeps the speed readable.
-  - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.6), forming a double-blink rhythm; the ring's width is untouched — the blink lives on the core only;
-  - 0.92–1 the **final blink**: the core flashes white (up to α 0.6); the ring width has already settled (its only motion is the 0–0.4 assembly) and stays stable to p = 1.
+  - 0.86–0.89 the **lead-in blink**: the same flash as the finale right before it (white core α 0.3 — halved from the measured strength to keep it a hint, not a strobe), forming a double-blink rhythm; the ring's width is untouched — the blink lives on the core only;
+  - 0.92–1 the **final blink**: the core flashes white (up to α 0.3); the ring width has already settled (its only motion is the 0–0.4 assembly) and stays stable to p = 1.
   - 0–1 the **fitted size curve** `tokens.sizeCurve.click` — one S-curve (cubic-bezier 0.7/0.75, fitted to the measured frames) from the small dim spawn at 0.32 across the full-size crossing (p ≈ 0.74) to the **+6 % peak at p 0.88** — together with the lead-in blink and the converging ring arriving — then one S settle, exactly 1.0 (the hit pose) from p 0.976. The flick shares this curve. The approach ring keeps its fixed linear path; at the peak the body edge still stays inside it.
 - **Click drag head**: identical timing to the click, with a white arrow over the core pointing at the next chain node (`heading`).
 
@@ -150,15 +150,16 @@ p is the entry progress. Ranges below are p values, e.g. "0–0.1 fade in".
   - **Drop drag**: shorter, no core bar, replaced by two 600 vertical notches; not connected to other notes.
 
 ### Clear effects (one grammar for every kind, deliberately small)
+Every effect plays at an overall **50 % opacity** (`EFFECT_ALPHA`): the burst marks the hit without hiding the notes around it; the judgement text is unaffected.
 1. **Colour flash**: 0–0.32, the note shape scales to 1.08× in the **grade colour** then collapses, peak opacity 0.25 (no white: a full-size white disc distracted from the scene and washed out the judgement text; the solid shape is only a mild colour confirmation).
 2. **Shock ring**: radius 0.95R → reach·R (outExpo), stroke 1.6W → 0.35W (matching FlatFX's 1.333 → 0.333), peak opacity 0.5.
    reach: click 1.45, drag 1.4, flick 1.4, hold 1.5, long hold 1.6, drop 1.3. Grades scale it: Perfect 1, Great 0.9, Good 0.75, Bad 0.6.
 3. **Sector ring**: Perfect and Great only. 24 sectors, 4 for flick; sitting between 0.8 and 1.02× reach, duty falling from 0.62 to 0.12.
 4. **Square shards**: Perfect 6 (white), Great 4, Good 3, Bad none. Shards fly out to 1.12× reach from deterministic randomness — baked results are reproducible.
-5. **Per-kind extras**: hold adds a second ring, long hold a vertical beam, flick horizontal impact bars and right-sweeping swipe arrows.
+5. **Per-kind extras**: hold and click add a second ring, long hold a vertical beam, flick horizontal impact bars and right-sweeping swipe arrows.
 
 Lower grades last longer and reach less: Perfect 0.42 s, Great 0.46 s, Good 0.52 s, Bad 0.56 s.
-**Miss** (0.5 s): the note powers down to the dim 800 shade, the outer ring greys and shrinks inward with a slight sink. No cross is drawn; the MISS text carries the meaning. The ghost follows each note's own steady end pose: the drag child / click drag child have no outer ring and keep their inner 600 hairline as they shrink (other round notes keep the "disc + grey ring" structure).
+**Miss** (0.5 s, also at the 50 % overall opacity): the note powers down to the dim 800 shade, the outer ring greys and shrinks inward with a slight sink. No cross is drawn; the MISS text carries the meaning. The ghost follows each note's own steady end pose: the drag child / click drag child have no outer ring and keep their inner 600 hairline as they shrink (other round notes keep the "disc + grey ring" structure).
 
 ### Judgement text (PERFECT / GREAT / GOOD / BAD / MISS)
 - **Position**: centred on the effect (the note centre), played alongside the clear or miss effect with the same duration.

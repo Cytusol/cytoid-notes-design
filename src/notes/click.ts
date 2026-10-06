@@ -184,7 +184,7 @@ export const click: NoteDesign = {
     draw: (p, ctx) => clickEnter(p, ctx),
     note: 'Size follows the fitted Cytus II S-curve: dim small spawn, one slow-fast-slow growth into the +6 % peak with the double blink, settled on the exact hit pose from p 0.976; approach ring converges linearly over the last 30 %. Ring (and the click-drag arrow) wake neutral 400 → 50 with the shade split.',
   },
-  clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, seed: 1 }),
+  clear: makeClearClips({ shape: 'circle', reach: 1.45, sectors: 24, extra: 'double', seed: 1 }),
   miss: makeMissClip('circle'),
 }
 

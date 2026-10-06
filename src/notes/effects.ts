@@ -18,12 +18,15 @@ export interface ClearFlavor {
   reach: number
   /** number of sectors in the crisp outer ring (Cytoid: 24, flick 4) */
   sectors: number
-  /** extra: horizontal streaks (flick), vertical beam (long hold), double ring (hold) */
+  /** extra: horizontal streaks (flick), vertical beam (long hold), double ring (hold, click) */
   extra?: 'streaks' | 'beam' | 'double'
   seed: number
 }
 
 // Kept compact on purpose: dense charts stack many effects, large ones get noisy.
+/** Overall opacity multiplier for the clear/miss effects (the judgement text is unaffected) —
+ *  the burst marks the hit without hiding the notes around it. */
+export const EFFECT_ALPHA = 0.5
 /** Flick swipe arrows per grade. */
 const FLICK_ARROWS: Record<ClearGrade, number> = { perfect: 3, great: 2, good: 1, bad: 1 }
 
@@ -143,8 +146,8 @@ export function clearEffect(flavor: ClearFlavor, grade: ClearGrade, u: number, c
 
   // flick arrows sit on top (they carry the swipe direction); the long-hold beam sits underneath
   return flavor.extra === 'streaks'
-    ? group([shock, second, sectors, flash, pieces, extra])
-    : group([extra, shock, second, sectors, flash, pieces])
+    ? group([shock, second, sectors, flash, pieces, extra], { opacity: EFFECT_ALPHA })
+    : group([extra, shock, second, sectors, flash, pieces], { opacity: EFFECT_ALPHA })
 }
 
 export function missEffect(shape: EffectShape, u: number, ctx: DrawContext, ghost?: (ctx: DrawContext, R: number, W: number, k: number) => SceneNode[]): SceneNode {
@@ -163,7 +166,7 @@ export function missEffect(shape: EffectShape, u: number, ctx: DrawContext, ghos
         outline(shape, R * lerp(1, 0.78, k) - W / 2, W * lerp(1, 0.6, k), gray, ctx),
       ]
   // no cross: the MISS judgement text carries the meaning
-  return group(parts, { opacity: op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
+  return group(parts, { opacity: EFFECT_ALPHA * op, transform: { y: lerp(0, ctx.unit * 0.08, k) } })
 }
 
 export function makeClearClips(flavor: ClearFlavor): Record<ClearGrade, Clip> {
