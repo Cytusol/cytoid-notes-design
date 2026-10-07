@@ -1,7 +1,7 @@
-import type { Chart } from '../player/types'
+import type { Chart } from '../src/types'
 import { describe, expect, it } from 'vitest'
-import { parseChart } from '../player/chart'
-import { chainFollow, deriveFrame, dragSegment, noteStateAt } from '../player/state'
+import { parseChart } from '../src/chart'
+import { chainFollow, deriveFrame, dragSegment, noteStateAt } from '../src/state'
 
 const board = { x: 10, y: 20, width: 300, height: 500 }
 

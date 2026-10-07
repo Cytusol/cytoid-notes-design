@@ -1,4 +1,4 @@
-import type { Clip } from 'cytoid-notes-design'
+import type { Clip } from '@cytoid/notes'
 import type { Ref } from 'vue'
 import { ref, watch } from 'vue'
 import { clipMax } from './clips'

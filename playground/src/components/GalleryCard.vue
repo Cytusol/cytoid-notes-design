@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { NoteKind } from 'cytoid-notes-design'
+import type { NoteKind } from '@cytoid/notes'
 import type { CanvasFrame } from './StageCanvas.vue'
-import { clamp01, clipsOf, createContext, designs, dragLine, drawScene, group, holdBody, KIND_LABEL, longHoldBody, renderNote, tokens } from 'cytoid-notes-design'
+import { clamp01, clipsOf, createContext, designs, dragLine, drawScene, group, holdBody, KIND_LABEL, longHoldBody, renderNote, tokens } from '@cytoid/notes'
 import { lifecycle } from '../composables/clips'
 import { palette } from '../composables/usePalette'
 import { review } from '../composables/useReview'

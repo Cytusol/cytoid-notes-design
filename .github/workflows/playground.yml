@@ -10,6 +10,9 @@ concurrency:
 
 # Builds & previews deploy via Cloudflare Pages' Git integration
 # (dashboard: Workers & Pages → cytoid-notes-design → Settings → Builds & deployments).
+# Monorepo: leave "Root directory" empty (repo root) so pnpm resolves the
+# workspace:* deps (playground imports @cytoid/notes + @cytoid/player);
+# Build command `pnpm build:playground`, Build output directory `playground/dist`.
 # This workflow is the test gate only; it does not deploy.
 jobs:
   ci:
@@ -25,4 +28,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck && pnpm test
+      - run: pnpm build
       - run: pnpm build:playground

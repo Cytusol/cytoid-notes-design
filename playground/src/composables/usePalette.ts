@@ -1,5 +1,5 @@
-import type { PaletteOptions } from 'cytoid-notes-design'
-import { createPalette, FAMILIES, GRADES } from 'cytoid-notes-design'
+import type { PaletteOptions } from '@cytoid/notes'
+import { createPalette, FAMILIES, GRADES } from '@cytoid/notes'
 import { computed, ref, watch } from 'vue'
 
 const key = 'cytoid-note-lab-palette-v1'

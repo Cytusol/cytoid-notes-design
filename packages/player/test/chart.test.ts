@@ -1,6 +1,6 @@
-import type { Chart } from '../player/types'
+import type { Chart } from '../src/types'
 import { describe, expect, it } from 'vitest'
-import { fadeInTime, pageY, parseChart, scanlineRatio, tickToTime, timeToTick } from '../player/chart'
+import { fadeInTime, pageY, parseChart, scanlineRatio, tickToTime, timeToTick } from '../src/chart'
 
 /** 120 BPM, time_base 480, three pages of 960 ticks (2 beats). */
 function baseChart(): Chart {

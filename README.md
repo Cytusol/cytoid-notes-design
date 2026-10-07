@@ -17,17 +17,21 @@ pnpm dev         # start the review playground (Vue)
 
 ## Layout
 
+Monorepo — the library package in `packages/notes`, the player core in `packages/player`, the review app in `playground/`.
+
 ```
-src/
-  tokens.ts          sizes / strokes / durations / default hues / grade colours
-  palette.ts         OKLCH hue-driven palette (hue, hex, hueShift, saturation)
-  core/              scene primitives, easings, colour math
-  notes/             per-note designs (enter / hold layers / clear / miss), bodies, drag line
-  render/            Canvas2D and SVG renderers
-  bake/              frame baking (Node only, resvg) and Cylheim mapping
-scripts/
-  bake.ts            bake CLI
-  sheet.ts           dev helper: contact sheets for every clip of a note, into .sheets/
+packages/notes/     @cytoid/notes — the design library (published)
+  src/
+    tokens.ts          sizes / strokes / durations / default hues / grade colours
+    palette.ts         OKLCH hue-driven palette (hue, hex, hueShift, saturation)
+    core/              scene primitives, easings, colour math
+    notes/             per-note designs (enter / hold layers / clear / miss), bodies, drag line
+    render/            Canvas2D and SVG renderers
+    bake/              frame baking (Node only, resvg) and Cylheim mapping
+  scripts/
+    bake.ts            bake CLI
+    sheet.ts           dev helper: contact sheets for every clip of a note, into .sheets/
+packages/player/    @cytoid/player — chart player core (parse / state / Pixi stage / judging)
 playground/          Vue review app (gallery / inspector / chart preview / frame player / palette)
 ```
 
@@ -42,7 +46,7 @@ pnpm bake --palette my-palette.json     # export from the playground's Palette p
 ## Library usage
 
 ```ts
-import { createContext, createPalette, drawScene, renderNote } from 'cytoid-notes-design'
+import { createContext, createPalette, drawScene, renderNote } from '@cytoid/notes'
 
 const palette = createPalette({ families: { click: { up: 200 } } })
 const ctx = createContext('click', { palette, direction: 'up', scale: 1 })

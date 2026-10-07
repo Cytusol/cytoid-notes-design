@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import type { Palette } from 'cytoid-notes-design'
-import type { ParsedChart } from '../../player/chart'
-import type { LoadedLevel } from '../../player/level'
+import type { Palette } from '@cytoid/notes'
+import type { LoadedLevel, ParsedChart } from '@cytoid/player'
+import { loadLevelFromUrl, loadLevelFromZip, parseChart, Player } from '@cytoid/player'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { parseChart } from '../../player/chart'
-import { loadLevelFromUrl, loadLevelFromZip } from '../../player/level'
-import { Player } from '../../player/player'
 import { palette as reviewPalette } from '../composables/usePalette'
 
 const hostEl = ref<HTMLElement | null>(null)

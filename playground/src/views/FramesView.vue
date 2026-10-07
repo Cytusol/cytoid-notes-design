@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Direction, NoteKind } from 'cytoid-notes-design'
-import type { FrameManifest } from '../../../src/bake'
-import { clipsOf, designs, frameIndex, KIND_LABEL, NOTE_KINDS, sampleTimes } from 'cytoid-notes-design'
+import type { Direction, NoteKind } from '@cytoid/notes'
+import type { FrameManifest } from '@cytoid/notes/bake'
+import { clipsOf, designs, frameIndex, KIND_LABEL, NOTE_KINDS, sampleTimes } from '@cytoid/notes'
+import { CYLHEIM_TARGETS } from '@cytoid/notes/bake/cylheim'
 import { computed, onMounted, ref, watch } from 'vue'
-import { CYLHEIM_TARGETS } from '../../../src/bake/cylheim'
 import NoteCanvas from '../components/NoteCanvas.vue'
 import SpriteCanvas from '../components/SpriteCanvas.vue'
 import { clipMax } from '../composables/clips'

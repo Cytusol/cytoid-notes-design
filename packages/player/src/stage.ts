@@ -1,8 +1,8 @@
-import type { Direction, Palette } from 'cytoid-notes-design'
+import type { Direction, Palette } from '@cytoid/notes'
 import type { ParsedChart } from './chart'
 import type { BoardRect } from './layout'
 import type { DerivedFrame, DerivedNote, DeriveOptions, Position } from './state'
-import { clamp01, createContext, dragLine, group, holdBody, longHoldBody, renderNote } from 'cytoid-notes-design'
+import { clamp01, createContext, dragLine, group, holdBody, longHoldBody, renderNote } from '@cytoid/notes'
 /**
  * Pixi stage for the player: turns `deriveFrame` output into display
  * objects drawn with the design library's vector clips — live, no baking.

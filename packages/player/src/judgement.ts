@@ -9,7 +9,7 @@
  * - Hold bodies / clear effects can key off `anchorOf` (the actual press
  *   time) instead of chart time.
  */
-import type { Grade } from 'cytoid-notes-design'
+import type { Grade } from '@cytoid/notes'
 import type { ParsedChart, ParsedNote } from './chart'
 import { DRAG_TYPES } from './chart'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { tokens } from 'cytoid-notes-design'
+import { tokens } from '@cytoid/notes'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import ChartView from './views/ChartView.vue'
 import FramesView from './views/FramesView.vue'

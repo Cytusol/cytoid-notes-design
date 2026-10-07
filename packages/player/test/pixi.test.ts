@@ -1,7 +1,7 @@
-import type { SceneNode } from 'cytoid-notes-design'
+import type { SceneNode } from '@cytoid/notes'
 import { Container, Graphics } from 'pixi.js'
 import { describe, expect, it } from 'vitest'
-import { SceneView } from '../player/pixi-render'
+import { SceneView } from '../src/pixi-render'
 
 function circle(fill: string, r = 10): SceneNode {
   return { type: 'circle', r, fill }

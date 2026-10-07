@@ -1,4 +1,4 @@
-import type { ClipShape, SceneNode, StrokeStyle, Transform } from 'cytoid-notes-design'
+import type { ClipShape, SceneNode, StrokeStyle, Transform } from '@cytoid/notes'
 /**
  * PixiJS renderer for the scene graph — the live counterpart of
  * `render/canvas.ts`. Used by the playground player to draw clip output

@@ -1,7 +1,7 @@
-import type { Chart } from '../player/types'
+import type { Chart } from '../src/types'
 import { describe, expect, it } from 'vitest'
-import { parseChart } from '../player/chart'
-import { JUDGE_WINDOWS, JudgeEngine } from '../player/judgement'
+import { parseChart } from '../src/chart'
+import { JUDGE_WINDOWS, JudgeEngine } from '../src/judgement'
 
 const board = { width: 800, height: 600 }
 

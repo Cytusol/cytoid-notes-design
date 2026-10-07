@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClipManifest } from '../../../src/bake'
+import type { ClipManifest } from '@cytoid/notes/bake'
 import type { CanvasFrame } from './StageCanvas.vue'
 import { ref, watch } from 'vue'
 import StageCanvas from './StageCanvas.vue'

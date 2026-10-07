@@ -4,10 +4,10 @@
  * DOM, no Pixi, fully unit-testable. `stage.ts` turns the output into
  * display objects.
  */
-import type { Direction, Grade, NoteKind, NoteState } from 'cytoid-notes-design'
+import type { Direction, Grade, NoteKind, NoteState } from '@cytoid/notes'
 import type { ParsedChart, ParsedNote } from './chart'
 import type { JudgeGrade } from './judgement'
-import { clamp01 } from 'cytoid-notes-design'
+import { clamp01 } from '@cytoid/notes'
 import { HOLD_TYPES, KIND_OF, pageAtTime, scanlineRatio } from './chart'
 
 export interface BoardTransform {

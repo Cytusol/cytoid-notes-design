@@ -188,7 +188,7 @@ Lower grades last longer and reach less: Perfect 0.42 s, Great 0.46 s, Good 0.52
 - `createContext`'s `direction` only selects colours (Cytoid's `UseAlternativeColor`, which consumers compute by Cytoid's own rules, including `is_forward` and the drop `NoteDirection`). The hold body and arrow orientations follow a separate `bodyDirection`, defaulting to `direction`, to support storyboard overrides and reversed pages.
 
 ### Frames (the Cytus II / Cylheim approach)
-- `pnpm bake` (flags in `scripts/bake.ts`) writes to `<out>/`:
+- `pnpm bake` (flags in `packages/notes/scripts/bake.ts`) writes to `<out>/`:
   - `manifest.json`, format `cytoid-notes/frames@1`: fps, each clip's mode, frame count, frame size, anchor and sampling formula;
   - `<kind>/<dir>/<clip>/<clip>_00000.png`: individual frames;
   - `<kind>/<dir>/<clip>.sheet.png`: sheet, with rows and columns in the manifest;

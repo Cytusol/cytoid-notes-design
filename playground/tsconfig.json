@@ -5,7 +5,12 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "paths": { "cytoid-notes-design": ["../src/index.ts"] },
+    "paths": {
+      "@cytoid/notes": ["../packages/notes/src/index.ts"],
+      "@cytoid/notes/bake": ["../packages/notes/src/bake/index.ts"],
+      "@cytoid/notes/bake/*": ["../packages/notes/src/bake/*"],
+      "@cytoid/player": ["../packages/player/src/index.ts"]
+    },
     "types": ["vite/client", "node"],
     "strict": true,
     "noEmit": true,

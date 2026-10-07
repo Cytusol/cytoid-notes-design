@@ -1,8 +1,8 @@
-import type { Grade, Palette } from 'cytoid-notes-design'
+import type { Grade, Palette } from '@cytoid/notes'
 import type { ParsedChart } from './chart'
 import type { Clock } from './clock'
 import type { StageOptions } from './stage'
-import { tokens } from 'cytoid-notes-design'
+import { tokens } from '@cytoid/notes'
 /**
  * Player controller: owns the Pixi application, the playback clock and the
  * parsed chart. Framework-agnostic — the Vue view only calls its API.

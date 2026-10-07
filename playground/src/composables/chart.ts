@@ -1,5 +1,5 @@
-import type { Direction, Grade, NoteKind, NoteState, Palette } from 'cytoid-notes-design'
-import { clamp01, createContext, designs, dragLine, drawScene, holdBody, longHoldBody, renderNote, tokens } from 'cytoid-notes-design'
+import type { Direction, Grade, NoteKind, NoteState, Palette } from '@cytoid/notes'
+import { clamp01, createContext, designs, dragLine, drawScene, holdBody, longHoldBody, renderNote, tokens } from '@cytoid/notes'
 
 export interface ChartNote { kind: NoteKind, hit: number, x: number, end?: number, chain?: string }
 export type GradeMix = 'perfect' | 'mixed' | 'misses'

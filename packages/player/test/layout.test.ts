@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { layoutBoard, layoutPlayer } from '../player/layout'
+import { layoutBoard, layoutPlayer } from '../src/layout'
 
 describe('layoutPlayer (core setSize formula)', () => {
   it('keeps the full viewport when between 4:3 and 22:9', () => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Clip, Direction, Grade, NoteKind, NoteState } from 'cytoid-notes-design'
+import type { Clip, Direction, Grade, NoteKind, NoteState } from '@cytoid/notes'
 import type { CanvasFrame } from './StageCanvas.vue'
-import { bounds, createContext, drawScene, group, renderJudgement, renderNote } from 'cytoid-notes-design'
+import { bounds, createContext, drawScene, group, renderJudgement, renderNote } from '@cytoid/notes'
 import { clipMax } from '../composables/clips'
 import { palette } from '../composables/usePalette'
 import StageCanvas from './StageCanvas.vue'

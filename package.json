@@ -1,11 +1,7 @@
 {
   "name": "cytoid-notes-design",
   "type": "module",
-  "version": "0.0.0",
-  "description": "Flat-style note designs for Cytoid: vector animation specs + baked frame animations",
-  "license": "MIT",
-  "repository": "github:Cytusol/cytoid-notes-design",
-  "sideEffects": false,
+  "private": true,
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
@@ -18,57 +14,23 @@
       "onFail": "download"
     }
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
-    "./bake": {
-      "types": "./dist/bake.d.mts",
-      "import": "./dist/bake.mjs"
-    }
-  },
-  "module": "./dist/index.mjs",
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/index.d.mts"
-      ],
-      "bake": [
-        "./dist/bake.d.mts"
-      ]
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "engines": {
-    "node": ">=24.0.0"
-  },
   "scripts": {
-    "build": "obuild",
+    "build": "pnpm -C packages/notes build",
+    "bake": "pnpm -C packages/notes bake",
     "dev": "pnpm -C playground dev",
-    "lint": "eslint",
-    "fmt": "eslint --fix",
-    "prepack": "pnpm build",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
     "build:playground": "pnpm -C playground build",
-    "bake": "tsx scripts/bake.ts",
-    "test:watch": "vitest dev"
-  },
-  "dependencies": {
-    "@resvg/resvg-js": "^2.6.2"
+    "test": "vitest run",
+    "test:watch": "vitest dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint",
+    "fmt": "eslint --fix"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
     "@types/node": "^24.12.4",
     "@vitest/coverage-v8": "^4.1.6",
-    "changelogen": "^0.6.2",
     "eslint": "^10.3.0",
     "jiti": "2.7.0",
-    "obuild": "^0.4.35",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
   }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CanvasFrame } from '../components/StageCanvas.vue'
 import type { GradeMix } from '../composables/chart'
-import { KIND_LABEL } from 'cytoid-notes-design'
+import { KIND_LABEL } from '@cytoid/notes'
 import { computed, ref } from 'vue'
 import StageCanvas from '../components/StageCanvas.vue'
 import { chart, chartKinds, chartLength, directionFor, gradeFor, paintChart } from '../composables/chart'

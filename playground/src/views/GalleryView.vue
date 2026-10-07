@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NOTE_KINDS } from 'cytoid-notes-design'
+import { NOTE_KINDS } from '@cytoid/notes'
 import GalleryCard from '../components/GalleryCard.vue'
 import ReviewControls from '../components/ReviewControls.vue'
 </script>

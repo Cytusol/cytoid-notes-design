@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { NoteKind } from 'cytoid-notes-design'
-import { clipsOf, designs, KIND_LABEL, NOTE_KINDS } from 'cytoid-notes-design'
+import type { NoteKind } from '@cytoid/notes'
+import { clipsOf, designs, KIND_LABEL, NOTE_KINDS } from '@cytoid/notes'
 import { computed, ref, watch } from 'vue'
 import NoteCanvas from '../components/NoteCanvas.vue'
 import { clipMax } from '../composables/clips'

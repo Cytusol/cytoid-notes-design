@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GRADES } from 'cytoid-notes-design'
+import { GRADES } from '@cytoid/notes'
 import { review } from '../composables/useReview'
 </script>
 
